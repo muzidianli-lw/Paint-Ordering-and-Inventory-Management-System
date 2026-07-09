@@ -4,5 +4,5 @@ namespace paint_ordering_system.Interfaces;
 
 public interface IBuyable
 {
-    public decimal GetFinalPaice();
+    public decimal GetFinalPrice();
 }

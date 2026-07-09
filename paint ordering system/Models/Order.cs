@@ -6,28 +6,27 @@ public class Order
 {
     private readonly DateTime _createdAt;
 
-    public PaintProduct Product { get; set; }
+    public List<OrderItem> Products { get; private set; } = new();
 
-    public int Quantity { get; set; }
+    private decimal _totalOrderPrice;
 
-    public decimal TotalPrice { get; set; }
-
-    public Order(PaintProduct paintProduct, int quantity)
+    public Order(List<OrderItem> products)
     {
-        Product = paintProduct;
-        Quantity = quantity;
+        Products = products;
         _createdAt = DateTime.Now;
-        TotalPrice = GetTotalPrice();
+        _totalOrderPrice = Products.Sum(p=>p.TotalPrice);
     }
 
     public void DisplayOrder()
     {
-        Product.DisplayInfo();
-        Console.WriteLine($"Quantity: {Quantity}");
+        foreach (OrderItem product in Products)
+        {
+            product.DisplayOrderItem();
+        }
     }
 
-    public decimal GetTotalPrice()
+    public decimal GetTotalOrderPrice()
     {
-        return Math.Round(Quantity * Product.GetFinalPaice(), MidpointRounding.AwayFromZero);
+        return Math.Round(_totalOrderPrice, 2, MidpointRounding.AwayFromZero);
     }
 }

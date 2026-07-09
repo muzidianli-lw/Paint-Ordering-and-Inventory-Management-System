@@ -4,5 +4,7 @@ public enum PaintType
 {
     BaseCoat,
     Glossy,
-    Matte
+    Matte,
+    SemiGlossy,
+    WhiteOnWhite,
 }
