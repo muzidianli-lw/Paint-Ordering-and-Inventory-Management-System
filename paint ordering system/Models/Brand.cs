@@ -4,9 +4,9 @@ namespace paint_ordering_system.Models;
 
 public class Brand
 {
-    public string Name { get;}
+    public string Name { get;} = "";
 
-    public string Discription { get;}
+    public string Discription { get;} = "";
 
     public Brand(string name, string discription)
     {
@@ -14,8 +14,13 @@ public class Brand
         {
             throw new ArgumentException("name is invalid");
         }
+        if (string.IsNullOrWhiteSpace(discription))
+        {
+            throw new ArgumentException("discription is invalid");
+        }
+
         Name = name.Trim();
-        Discription = discription ?? "";
+        Discription = discription;
     }
 
     public void DisplayBrand()
