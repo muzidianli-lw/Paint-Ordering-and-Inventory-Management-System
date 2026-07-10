@@ -6,17 +6,17 @@ namespace paint_ordering_system.Models;
 public class PaintSpecification
 {
     public string Color { get; } = "";
-    public int SizeInLiters { get; set; }
+    public int SizeInLiters { get; }
 
     public PaintSpecification(string color, int size)
     {
         if (string.IsNullOrWhiteSpace(color))
         {
-            throw new ArgumentException("Color is invalid");
+            throw new ArgumentException("Color is invalid", nameof(color));
         }
-        if (size < 0)
+        if (size <= 0)
         {
-            throw new ArgumentException("Size is invalid");
+            throw new ArgumentException("Size is invalid", nameof(size));
         }
         Color = color;
         SizeInLiters = size;
