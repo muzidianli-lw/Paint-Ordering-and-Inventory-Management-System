@@ -12,11 +12,11 @@ public class Brand
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("name is invalid");
+            throw new ArgumentException("name is invalid", nameof(name));
         }
         if (string.IsNullOrWhiteSpace(discription))
         {
-            throw new ArgumentException("discription is invalid");
+            throw new ArgumentException("discription is invalid", nameof(discription));
         }
 
         Name = name.Trim();

@@ -13,10 +13,8 @@ public class OrderItem
     public OrderItem(PaintProduct paintProduct, int quantity)
     {
         ArgumentNullException.ThrowIfNull(paintProduct);
-        if (quantity <= 0)
-        {
-            throw new ArgumentException("quantity < 0");
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual<int>(quantity, 0);
+
         Product = paintProduct;
         Quantity = quantity;
         TotalPrice = Math.Round(Quantity * Product.GetFinalPrice(), MidpointRounding.AwayFromZero);

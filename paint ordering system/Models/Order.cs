@@ -4,20 +4,22 @@ namespace paint_ordering_system.Models;
 
 public class Order
 {
-    private readonly DateTime _createdAt;
+    private readonly DateTime _createdAt; // req
 
-    public List<OrderItem> Products { get; private set; } = new();
+    private readonly List<OrderItem> _products = new();
 
-    private decimal _totalOrderPrice;
+    public IReadOnlyList<OrderItem> Products => _products;
 
-    public Order(List<OrderItem> products)
+    private decimal TotalPrice { get; }  //req
+
+    public Order(List<OrderItem> products) // req
     {
-        Products = products;
+        _products = products;
         _createdAt = DateTime.Now;
-        _totalOrderPrice = Products.Sum(p=>p.TotalPrice);
+        TotalPrice = Math.Round(Products.Sum(p=>p.TotalPrice), 2, MidpointRounding.AwayFromZero);
     }
 
-    public void DisplayOrder()
+    public void DisplayOrder() // req
     {
         foreach (OrderItem product in Products)
         {
@@ -25,8 +27,8 @@ public class Order
         }
     }
 
-    public decimal GetTotalOrderPrice()
+    public decimal GetTotalOrderPrice() // req
     {
-        return Math.Round(_totalOrderPrice, 2, MidpointRounding.AwayFromZero);
+        return TotalPrice;
     }
 }
