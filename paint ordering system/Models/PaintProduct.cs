@@ -10,6 +10,8 @@ public class PaintProduct: IBuyable
     private readonly decimal _taxRate; //req
     private const decimal _defaultDiscount = 0.05m; //req
 
+    public int Id { get; }
+
     public string Name { get; } = "";// 名字 req
 
     public PaintType Type { get; } // 类型 req
@@ -20,13 +22,14 @@ public class PaintProduct: IBuyable
 
     public decimal Price { get; } // 价格/升 req
 
-    public PaintProduct(string name, PaintType type, PaintSpecification specification, decimal price, Brand brand) // req
+    public PaintProduct(int id, string name, PaintType type, PaintSpecification specification, decimal price, Brand brand) // req
     {
         ArgumentNullException.ThrowIfNull(specification);
         ArgumentNullException.ThrowIfNull(brand);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual<decimal>(price, 0m);
         _taxRate = 0.1m;
+        Id = id;
         Name = name.Trim();
         Type = type;
         Specification = specification;
