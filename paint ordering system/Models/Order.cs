@@ -7,7 +7,7 @@ namespace paint_ordering_system.Models;
 
 public class Order
 {
-    private readonly DateTime _createdAt; // req
+    public DateTime CreatedAt {get; init;} // req
 
     private readonly List<OrderItem> _products = new();
 
@@ -15,10 +15,14 @@ public class Order
 
     private decimal TotalPrice=>Math.Round(Products.Sum(p=>p.TotalPrice), 2, MidpointRounding.AwayFromZero);
 
-    public Order(List<OrderItem> products) // req
+    public Payment Payment { get; init;}
+
+    public Order(List<OrderItem> products, Payment payment) // req
     {
         _products = products.ToList();
-        _createdAt = DateTime.Now;
+        CreatedAt = DateTime.Now;
+        ArgumentNullException.ThrowIfNull(payment);
+        Payment = payment;
     }
 
     public void DisplayOrder() // req
