@@ -8,6 +8,7 @@ public class Payment
 {
     public int Id { get; init; }
 
+    public DateTime CreatedAt { get;}
     private PaymentState _paymentState;
     public PaymentState PaymentState
     { 
@@ -50,6 +51,7 @@ public class Payment
     public Payment(int id, PaymentState paymentState, decimal paymentAmount, PaymentMethod paymentMethod)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(id, 0);
+        CreatedAt = DateTime.Now;
         Id = id;
         PaymentAmount = paymentAmount;
         PaymentMethod = paymentMethod;
