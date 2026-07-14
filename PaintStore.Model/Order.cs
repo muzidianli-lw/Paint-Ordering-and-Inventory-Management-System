@@ -4,10 +4,10 @@ namespace PaintStore.Models;
 
 public class Order
 {
-    public int Id { get; init; }
-    public DateTime CreatedDate {get; }
+    public int Id { get; }
+    public DateTime CreatedAt {get; }
 
-    public int UserId { get; init; }
+    public int UserId { get; }
     
     private readonly List<PaintProduct> _paintProducts;
     public IReadOnlyList<PaintProduct> PaintProducts => _paintProducts;
@@ -23,6 +23,6 @@ public class Order
         _paintProducts = paintProducts.ToList();
         Id = id;
         UserId = userId;
-        CreatedDate = DateTime.Now;
+        CreatedAt = DateTime.Now;
     }
 }
