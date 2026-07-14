@@ -1,32 +1,39 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace PaintStore.Models;
 
 public class User
 {
-    [Required]
-    public int Id { get; init; }
+    public int Id { get; }
 
-    [Required]
-    public string Name { get; init; } = "";
+    public string Name { get; } = "";
 
-    [Required]
-    public string Email { get; init; } = "";
+    public string Email { get; } = "";
 
-    [Required]
-    public string Phone { get; init; } = "";
+    public string Phone { get; } = "";
 
-    private readonly DateTime _createdDate;
+    public DateTime CreatedAt { get; }
 
-    public User(int id, string name, string email)
+    public User(int id, string name, string email, string phone)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(id, 0);
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(email);
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("name is null or whitespace");
+        }
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("email is null or whitespace");
+        }
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            throw new ArgumentException("phone is null or whitespace");
+        }
+    
         Id = id;
         Name = name.Trim();
         Email = email.Trim();
-        _createdDate = DateTime.Now;
+        Phone = phone.Trim();
+        CreatedAt = DateTime.UtcNow;
     }
 }
