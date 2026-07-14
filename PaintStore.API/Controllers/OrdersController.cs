@@ -54,13 +54,13 @@ namespace PaintStore.API.Controllers
         public ActionResult GetLastMonthOrders()
         {
             DateTime lastMonthDate = DateTime.Now.AddMonths(-1);
-            return Ok(MockData.Orders.Where(o=>o.CreatedDate.Month == lastMonthDate.Month && o.CreatedDate.Year == lastMonthDate.Year).ToList());
+            return Ok(MockData.Orders.Where(o=>o.CreatedAt.Month == lastMonthDate.Month && o.CreatedAt.Year == lastMonthDate.Year).ToList());
         }
 
         [HttpGet("byDate")]
         public ActionResult GetOrdersByDate([FromQuery] DateTime date)
         {
-            return Ok(MockData.Orders.Where(o=>o.CreatedDate.Date == date.Date).ToList());
+            return Ok(MockData.Orders.Where(o=>o.CreatedAt.Date == date.Date).ToList());
         }
     }
 }
