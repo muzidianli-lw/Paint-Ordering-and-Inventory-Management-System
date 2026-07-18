@@ -31,7 +31,7 @@ namespace PaintStore.API.Controllers
             return Ok(user);
         } 
 
-        [HttpGet("by-name/{name:string}")]
+        [HttpGet("by-name/{name}")]
         public ActionResult GetUsersByName(string name)
         {
             if(string.IsNullOrWhiteSpace(name))
@@ -41,7 +41,7 @@ namespace PaintStore.API.Controllers
             return Ok(MockDataUsers.Users.Where(u=>u.Name == name).ToList());
         } 
 
-        [HttpGet("by-email/{email:string}")]
+        [HttpGet("by-email/{email}")]
         public ActionResult GetUsersByEmail(string email)
         {
             if(string.IsNullOrWhiteSpace(email))
