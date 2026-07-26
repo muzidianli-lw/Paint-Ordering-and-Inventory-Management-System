@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PaintStore.API.Data;
+using PaintStore.API.Database;
 using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
@@ -8,6 +9,13 @@ namespace PaintStore.API.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
+        private readonly PaintStoreDbContext _dbContext;
+
+        public UsersController(PaintStoreDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
         [HttpGet]
         public ActionResult GetUsers()
         {
@@ -49,6 +57,15 @@ namespace PaintStore.API.Controllers
                 return BadRequest("email is null or whitespace");
             }
             return Ok(MockDataUsers.Users.Where(u=>u.Email== email).ToList());            
+        }
+
+        [HttpPost]
+        public IActionResult CreateUser([FromBody] User user)
+        {
+            _dbContext.Add(user);
+            _dbContext.SaveChanges();
+            return CreatedAtAction(nameof(GetUsersById), new {user.Id}, user);
+
         } 
     }
 }

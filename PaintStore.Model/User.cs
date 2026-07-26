@@ -4,19 +4,18 @@ namespace PaintStore.Models;
 
 public class User
 {
-    public int Id { get; }
+    public int Id { get; private set;}
 
-    public string Name { get; } = "";
+    public string Name { get; init;} = "";
 
-    public string Email { get; } = "";
+    public string Email { get; init;} = "";
 
-    public string Phone { get; } = "";
+    public string Phone { get; init;} = "";
 
-    public DateTime CreatedAt { get; }
+    public DateTime CreatedAt { get; init;}
 
-    public User(int id, string name, string email, string phone)
+    public User(string name, string email, string phone)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(id, 0);
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("name is null or whitespace");
@@ -30,7 +29,6 @@ public class User
             throw new ArgumentException("phone is null or whitespace");
         }
     
-        Id = id;
         Name = name.Trim();
         Email = email.Trim();
         Phone = phone.Trim();
