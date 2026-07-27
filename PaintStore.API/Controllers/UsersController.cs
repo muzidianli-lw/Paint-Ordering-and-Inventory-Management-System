@@ -1,4 +1,6 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Data;
 using PaintStore.API.Database;
 using PaintStore.Models;
@@ -17,20 +19,20 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult GetUsers()
+        public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
         {
-            return Ok(MockDataUsers.Users.ToList());
+            return Ok(await _dbContext.Users.ToListAsync(cancellationToken));
         }
 
         [HttpGet("by-user-id/{userId:int}")]
-        public ActionResult GetUsersById(int userId)
+        public async Task<IActionResult> GetUsersById(int userId, CancellationToken cancellationToken)
         {
             if(userId < 0)
             {
                 return BadRequest("userId < 0");
             }
 
-            User? user = MockDataUsers.Users.FirstOrDefault(u=>u.Id == userId);
+            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == userId, cancellationToken);
             if (user == null)
             {
                 return NotFound();
@@ -40,32 +42,32 @@ namespace PaintStore.API.Controllers
         } 
 
         [HttpGet("by-name/{name}")]
-        public ActionResult GetUsersByName(string name)
+        public async Task<IActionResult> GetUsersByName(string name, CancellationToken cancellationToken)
         {
             if(string.IsNullOrWhiteSpace(name))
             {
                 return BadRequest("name is null or whitespace");
             }
-            return Ok(MockDataUsers.Users.Where(u=>u.Name == name).ToList());
+            return Ok(await _dbContext.Users.Where(u=>u.Name == name).ToListAsync(cancellationToken));
         } 
 
         [HttpGet("by-email/{email}")]
-        public ActionResult GetUsersByEmail(string email)
+        public async Task<IActionResult> GetUsersByEmail(string email, CancellationToken cancellationToken)
         {
             if(string.IsNullOrWhiteSpace(email))
             {
                 return BadRequest("email is null or whitespace");
             }
-            return Ok(MockDataUsers.Users.Where(u=>u.Email== email).ToList());            
+            return Ok(await _dbContext.Users.Where(u=>u.Email== email).ToListAsync(cancellationToken));            
         }
 
         [HttpPost]
-        public IActionResult CreateUser([FromBody] User user)
+        public async Task<IActionResult> CreateUser([FromBody] User user, CancellationToken cancellationToken)
         {
-            _dbContext.Add(user);
-            _dbContext.SaveChanges();
-            return CreatedAtAction(nameof(GetUsersById), new {user.Id}, user);
-
+            User userUsed = new User(user.Name, user.Email, user.Phone);
+            _dbContext.Users.Add(userUsed);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return CreatedAtAction(nameof(GetUsersById), new {userId=userUsed.Id}, userUsed);
         } 
     }
 }

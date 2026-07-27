@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace PaintStore.Models;
 
@@ -6,13 +7,18 @@ public class User
 {
     public int Id { get; private set;}
 
-    public string Name { get; init;} = "";
+    public string Name { get; private set;} = "";
 
-    public string Email { get; init;} = "";
+    public string Email { get; private set;} = "";
 
-    public string Phone { get; init;} = "";
+    public string Phone { get; private set;} = "";
 
-    public DateTime CreatedAt { get; init;}
+    public DateTime CreatedAt { get; private init;}
+
+    private User()
+    {
+        
+    }
 
     public User(string name, string email, string phone)
     {
