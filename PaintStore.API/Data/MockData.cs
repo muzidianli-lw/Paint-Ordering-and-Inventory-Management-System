@@ -12,15 +12,15 @@ public static class MockData
     {
         _orders.Add(new Order(1, 2, new List<PaintProduct>
             {
-                new PaintProduct(1, "abc", 100m),
-                new PaintProduct(2, "def", 75m)
+                new PaintProduct("abc", 100m),
+                new PaintProduct("def", 75m)
             }
         ));
 
         _orders.Add(new Order(2, 3, new List<PaintProduct>
             {
-                new PaintProduct(3, "ghi", 125m),
-                new PaintProduct(4, "jkl", 50m)
+                new PaintProduct("ghi", 125m),
+                new PaintProduct("jkl", 50m)
             }
         ));
     }

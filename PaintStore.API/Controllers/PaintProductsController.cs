@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using PaintStore.API.Data;
+using Microsoft.EntityFrameworkCore;
+using PaintStore.API.Database;
+using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
 {
@@ -7,16 +10,22 @@ namespace PaintStore.API.Controllers
     [ApiController]
     public class PaintProductsController : ControllerBase
     {
-        [HttpGet]
-        public ActionResult GetAllPaintProducts()
+        private readonly PaintStoreDbContext _dbContext;
+        public PaintProductsController(PaintStoreDbContext dbContext)
         {
-            return Ok(MockData.Orders.SelectMany(o=>o.PaintProducts).ToList());
+            _dbContext = dbContext;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetAllPaintProducts(CancellationToken cancellationToken)
+        {
+            return Ok(await _dbContext.PaintProducts.ToListAsync(cancellationToken));
         }
 
         [HttpGet("by-price")]
-        public ActionResult GetProductsByPriceRange([FromQuery] decimal min, [FromQuery] decimal max)
+        public async Task<ActionResult> GetProductsByPriceRange([FromQuery] decimal min, [FromQuery] decimal max, CancellationToken cancellationToken)
         {
-            if (min < 0)
+            if (min < 0) // 返回badrequest和直接抛异常有什么区别？
             {
                 return BadRequest("min < 0");
             }
@@ -24,17 +33,25 @@ namespace PaintStore.API.Controllers
             {
                 return BadRequest("max <= min");
             }
-            return Ok(MockData.Orders.SelectMany(o=>o.PaintProducts).Where(p=>p.Price < max && p.Price > min).ToList());
+            var query = _dbContext.PaintProducts.Where(p=>p.Price < max && p.Price > min);
+            return Ok(await query.ToListAsync(cancellationToken));
         }
 
         [HttpGet("by-paint-id/{paintId:int}")]
-        public ActionResult GetPaintProductsByPaintId([FromRoute] int paintId)
+        public async Task<IActionResult> GetPaintProductsByPaintId([FromRoute] int paintId, CancellationToken cancellationToken)
         {
             if (paintId < 0)
             {
                 return BadRequest("paintId < 0");
             }
-            return Ok(MockData.Orders.SelectMany(o=>o.PaintProducts).DistinctBy(p=>p.Id).Where(p=>p.Id == paintId).ToList()[0]);
+
+            PaintProduct? paintProduct = await _dbContext.PaintProducts.FirstOrDefaultAsync(p=>p.Id == paintId, cancellationToken);
+            if (paintProduct == null)
+            {
+                return NotFound(); //是NoContent还是NotFound
+            }
+
+            return Ok(paintProduct);
         }
 
         [HttpGet("by-user-id/{userId:int}")]
@@ -44,7 +61,17 @@ namespace PaintStore.API.Controllers
             {
                 return BadRequest("userId < 0");
             }
-            return Ok(MockData.Orders.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts).ToList());
+            //return Ok(_dbContext.PaintProducts.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts).ToList());
+            return NotFound(); // 未完待续
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreatPaintProduct([FromBody] PaintProduct paintProduct, CancellationToken cancellationToken)
+        {
+            PaintProduct paintProductUsed = new PaintProduct(paintProduct.Name, paintProduct.Price);
+            _dbContext.PaintProducts.Add(paintProductUsed);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return CreatedAtAction(nameof(GetPaintProductsByPaintId), new {paintId=paintProductUsed.Id}, paintProductUsed);
         }
     }
 }
