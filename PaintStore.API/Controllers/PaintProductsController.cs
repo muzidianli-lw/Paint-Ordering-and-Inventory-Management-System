@@ -25,7 +25,7 @@ namespace PaintStore.API.Controllers
         [HttpGet("by-price")]
         public async Task<ActionResult> GetProductsByPriceRange([FromQuery] decimal min, [FromQuery] decimal max, CancellationToken cancellationToken)
         {
-            if (min < 0) // 返回badrequest和直接抛异常有什么区别？
+            if (min < 0)
             {
                 return BadRequest("min < 0");
             }
@@ -48,7 +48,7 @@ namespace PaintStore.API.Controllers
             PaintProduct? paintProduct = await _dbContext.PaintProducts.FirstOrDefaultAsync(p=>p.Id == paintId, cancellationToken);
             if (paintProduct == null)
             {
-                return NotFound(); //是NoContent还是NotFound
+                return NotFound();
             }
 
             return Ok(paintProduct);
@@ -62,7 +62,8 @@ namespace PaintStore.API.Controllers
                 return BadRequest("userId < 0");
             }
             //return Ok(_dbContext.PaintProducts.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts).ToList());
-            return NotFound(); // 未完待续
+            // todo
+            return Ok();
         }
 
         [HttpPost]

@@ -13,4 +13,12 @@ public class PaintStoreDbContext: DbContext
     {
         
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<PaintProduct>()
+                    .Property(p=>p.Price)
+                    .HasPrecision(18, 2);
+    }
 }
