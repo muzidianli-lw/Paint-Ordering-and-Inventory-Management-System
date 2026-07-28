@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PaintStore.API.Data;
 using PaintStore.API.Database;
 using PaintStore.Models;
 

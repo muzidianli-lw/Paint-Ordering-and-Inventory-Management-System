@@ -8,6 +8,7 @@ public class PaintStoreDbContext: DbContext
 {
     public DbSet<User> Users {get; set;}
     public DbSet<PaintProduct> PaintProducts {get; set;}
+    public DbSet<Order> Orders {get; set;}
 
     public PaintStoreDbContext(DbContextOptions<PaintStoreDbContext> dbContextOptions): base(dbContextOptions)
     {
