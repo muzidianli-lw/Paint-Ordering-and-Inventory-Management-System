@@ -55,15 +55,15 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet("by-user-id/{userId:int}")]
-        public ActionResult GetPaintProductsByUserId([FromRoute] int userId)
+        public async Task<ActionResult> GetPaintProductsByUserId([FromRoute] int userId, CancellationToken cancellationToken)
         {
             if (userId < 0)
             {
                 return BadRequest("userId < 0");
             }
-            //return Ok(_dbContext.PaintProducts.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts).ToList());
-            // todo
-            return Ok();
+            var query = _dbContext.Orders.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts);
+            List<PaintProduct> paintProducts = await query.ToListAsync(cancellationToken);
+            return Ok(paintProducts.DistinctBy(p=>p.Id).ToList());
         }
 
         [HttpPost]
