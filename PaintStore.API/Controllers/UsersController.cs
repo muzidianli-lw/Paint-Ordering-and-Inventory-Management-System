@@ -22,10 +22,6 @@ namespace PaintStore.API.Controllers
         public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
         {
             List<User> users = await _dbContext.Users.ToListAsync(cancellationToken);
-            if (users.Count == 0)
-            {
-                return Ok();
-            }
             List<UserResponseDto> usersDto = [];
             foreach(var user in users)
             {
@@ -34,27 +30,32 @@ namespace PaintStore.API.Controllers
             return Ok(usersDto);
         }
 
-        [HttpGet("{Id:int}")]
-        public async Task<IActionResult> Get(int Id, CancellationToken cancellationToken)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
         {
-            if(Id < 0)
+            if(id < 0)
             {
-                return BadRequest("Id < 0");
+                return BadRequest("id < 0");
             }
 
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == Id, cancellationToken);
+            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == id, cancellationToken);
             if (user == null)
             {
                 return NotFound();
             }
 
-            return Ok(user);
+            return Ok(new UserResponseDto(){Name=user.Name, Email=user.Email, Phone=user.Phone});
         }
 
-        [HttpPost("{Id:int}")]
-        public async Task<IActionResult> Put([FromRoute] int Id, [FromBody] UserCreateRequestDto userDto, CancellationToken cancellationToken)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] UserUpdateRequestDto userDto, CancellationToken cancellationToken)
         {
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == Id, cancellationToken);
+            if(id < 1)
+            {
+                return BadRequest("input id error");
+            }
+
+            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == id, cancellationToken);
             if (user == null)
             {
                 return NotFound();
@@ -71,10 +72,10 @@ namespace PaintStore.API.Controllers
             return Ok(userResponseDto);
         }
 
-        [HttpDelete("{Id:int}")]
-        public async Task<IActionResult> Delete(int Id, CancellationToken cancellationToken)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == Id, cancellationToken);
+            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == id, cancellationToken);
             if (user == null)
             {
                 return NotFound();
@@ -88,20 +89,7 @@ namespace PaintStore.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] UserCreateRequestDto userDto, CancellationToken cancellationToken)
         {
-            if(string.IsNullOrWhiteSpace(userDto.Name))
-            {
-                return BadRequest("input name error");
-            }
-            if(string.IsNullOrWhiteSpace(userDto.Email))
-            {
-                return BadRequest("input email error");
-            }
-            if(string.IsNullOrWhiteSpace(userDto.Phone))
-            {
-                return BadRequest("input phone number error");
-            }
-
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Email == userDto.Email);
+            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Email == userDto.Email, cancellationToken);
             if (user != null)
             {
                 return BadRequest("input Email duplicated");
