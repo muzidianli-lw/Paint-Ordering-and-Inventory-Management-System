@@ -25,5 +25,11 @@ public class PaintStoreDbContext: DbContext
         modelBuilder.Entity<User>()
                     .HasIndex(u=>u.Email)
                     .IsUnique();
+
+        modelBuilder.Entity<Order>()
+                    .HasOne(o=>o.User)
+                    .WithMany()
+                    .OnDelete(DeleteBehavior.Restrict);
+
     }
 }
