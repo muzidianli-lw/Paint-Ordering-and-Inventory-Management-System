@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaintStore.API.DTOs;
 
-public class UserCreateRequestDto
+public sealed class UserCreateRequestDto
 {
     [Required]
-    public string Name { get; set;} = null!;
+    public string Name { get; init;} = null!;
 
     [Required]
     [EmailAddress]
-    public string Email { get; set;} = null!;
+    public string Email { get; init;} = null!;
 
     [Required]
     [Phone]
-    public string Phone { get; set;} = null!;
+    public string Phone { get; init;} = null!;
 }
