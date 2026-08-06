@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaintStore.API.Database;
 
@@ -11,9 +12,11 @@ using PaintStore.API.Database;
 namespace PaintStore.API.Migrations
 {
     [DbContext(typeof(PaintStoreDbContext))]
-    partial class PaintStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260806135942_user_ondelete")]
+    partial class user_ondelete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
