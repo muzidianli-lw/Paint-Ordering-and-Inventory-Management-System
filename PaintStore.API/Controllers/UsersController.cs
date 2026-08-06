@@ -88,15 +88,11 @@ namespace PaintStore.API.Controllers
             }
             catch(DbUpdateConcurrencyException)
             {
-                bool existed = await _dbContext.Users.AnyAsync(u=>u.Id == id, cancellationToken);
-                if (existed)
-                {
-                    return Conflict("old data changed"); // 需要配置吗？
-                }
+                return NoContent();
             }
             catch(DbUpdateException exception)
                 when( exception.InnerException is SqlException sqlException
-                    && sqlException.Number == 547) //配置处有问题
+                    && sqlException.Number == 547)
             {
                 return Conflict("related data existed"); 
             }
