@@ -1,13 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PaintStore.Models;
 
 public class User
 {
     public int Id { get; private set;}
 
+    [MaxLength(256)]
     public string Name { get; private set;} = "";
 
+    [MaxLength(256)]
     public string Email { get; private set;} = "";
-
+    
+    [MaxLength(32)]
     public string Phone { get; private set;} = "";
 
     public DateTime CreatedAt { get; private init;}
