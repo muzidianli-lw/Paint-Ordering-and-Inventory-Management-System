@@ -4,11 +4,11 @@ public class User
 {
     public int Id { get; private set;}
 
-    public string Name { get; set;} = "";
+    public string Name { get; private set;} = "";
 
-    public string Email { get; set;} = "";
+    public string Email { get; private set;} = "";
 
-    public string Phone { get; set;} = "";
+    public string Phone { get; private set;} = "";
 
     public DateTime CreatedAt { get; private init;}
 
@@ -17,7 +17,7 @@ public class User
         
     }
 
-    public User(string name, string email, string phone)
+    private void UpdateInfo(string name, string email, string phone)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -35,6 +35,16 @@ public class User
         Name = name.Trim();
         Email = email.Trim();
         Phone = phone.Trim();
+    }
+
+    public User(string name, string email, string phone)
+    {
+        UpdateInfo(name, email, phone);
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public void Update(string name, string email, string phone)
+    {
+        UpdateInfo(name, email, phone);
     }
 }
