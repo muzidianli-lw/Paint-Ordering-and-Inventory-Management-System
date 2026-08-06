@@ -21,5 +21,9 @@ public class PaintStoreDbContext: DbContext
         modelBuilder.Entity<PaintProduct>()
                     .Property(p=>p.Price)
                     .HasPrecision(18, 2);
+        
+        modelBuilder.Entity<User>()
+                    .HasIndex(u=>u.Email)
+                    .IsUnique();
     }
 }
