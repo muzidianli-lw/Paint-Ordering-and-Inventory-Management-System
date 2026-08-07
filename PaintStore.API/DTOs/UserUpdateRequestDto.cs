@@ -17,4 +17,7 @@ public sealed class UserUpdateRequestDto
     [Phone]
     [MaxLength(32)]
     public string Phone { get; init;} = null!;
+
+    [Required]
+    public byte[] RowVersion { get; set; } = null!;
 }

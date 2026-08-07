@@ -17,6 +17,8 @@ public class User
 
     public DateTime CreatedAt { get; private init;}
 
+    public byte[] RowVersion { get; set; } = null!;
+
     private User()
     {
         

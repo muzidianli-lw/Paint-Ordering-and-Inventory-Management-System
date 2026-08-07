@@ -27,7 +27,8 @@ namespace PaintStore.API.Controllers
                                                                 Id = u.Id,
                                                                 Name=u.Name, 
                                                                 Email=u.Email, 
-                                                                Phone=u.Phone
+                                                                Phone=u.Phone,
+                                                                RowVersion=u.RowVersion
                                                             })
                                                     .ToListAsync(cancellationToken);
             return Ok(users);
@@ -42,7 +43,8 @@ namespace PaintStore.API.Controllers
                                                                             Id = u.Id,
                                                                             Name=u.Name, 
                                                                             Email=u.Email, 
-                                                                            Phone=u.Phone
+                                                                            Phone=u.Phone,
+                                                                            RowVersion=u.RowVersion
                                                                         })
                                                             .FirstOrDefaultAsync(cancellationToken);
             if (user == null)
@@ -67,9 +69,29 @@ namespace PaintStore.API.Controllers
                 return BadRequest("input Email duplicated");
             }
 
+            _dbContext.Entry(user)
+                .Property(u=>u.RowVersion)
+                .OriginalValue = userDto.RowVersion;
+
             user.Update(userDto.Name, userDto.Email, userDto.Phone);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return Ok(new UserResponseDto(){Id=user.Id, Name=user.Name, Email=user.Email, Phone=user.Phone});
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                bool userExist = await _dbContext.Users.AnyAsync(u=>u.Id == user.Id, cancellationToken);
+                if (userExist)
+                {
+                    return Conflict("old data changed");
+                }
+                return NotFound();
+            }
+            return Ok(new UserResponseDto(){Id=user.Id, 
+                                            Name=user.Name, 
+                                            Email=user.Email, 
+                                            Phone=user.Phone,
+                                            RowVersion=user.RowVersion});
         }
 
         [HttpDelete("{id:int:min(1)}")]
@@ -127,7 +149,8 @@ namespace PaintStore.API.Controllers
                                                                     Id=user.Id, 
                                                                     Name=user.Name, 
                                                                     Email=user.Email, 
-                                                                    Phone=user.Phone});
+                                                                    Phone=user.Phone,
+                                                                    RowVersion=user.RowVersion});
         }
     }
 }
