@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +20,18 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllUsers([FromQuery] PaginationRequestDto request, CancellationToken cancellationToken)
         {
-            List<UserResponseDto> users = await _dbContext.Users
+            var query = _dbContext.Users.OrderBy(u=>u.Id);
+
+            long offset = ((long)request.Page - 1) * request.PageSize;
+            if (offset > int.MaxValue)
+            {
+                return BadRequest("Page is too large.");
+            }
+
+            List<UserResponseDto> users = await query.Skip((int)offset)
+                                                    .Take(request.PageSize)
                                                     .Select(u => new UserResponseDto ()
                                                             {
                                                                 Id = u.Id,
@@ -31,7 +41,16 @@ namespace PaintStore.API.Controllers
                                                                 RowVersion=u.RowVersion
                                                             })
                                                     .ToListAsync(cancellationToken);
-            return Ok(users);
+            
+            int totalCount = await query.CountAsync(cancellationToken);
+
+            return Ok(new PaginationResponseDto<UserResponseDto>()
+            {
+                Items = users,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            });
         }
 
         [HttpGet("{id:int:min(1)}")]
@@ -63,10 +82,10 @@ namespace PaintStore.API.Controllers
                 return NotFound();
             }
 
-            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email && u.Id != user.Id, cancellationToken);
+            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim() && u.Id != user.Id, cancellationToken);
             if (emailExist)
             {
-                return BadRequest("input Email duplicated");
+                return Conflict("input email is existed");
             }
 
             _dbContext.Entry(user)
@@ -87,6 +106,12 @@ namespace PaintStore.API.Controllers
                 }
                 return NotFound();
             }
+            catch (DbUpdateException exception)
+                when(exception.InnerException is SqlException sqlException 
+                    && sqlException.Number == 2601)
+            {
+                return Conflict("input email is existed");
+            }
             return Ok(new UserResponseDto(){Id=user.Id, 
                                             Name=user.Name, 
                                             Email=user.Email, 
@@ -97,38 +122,30 @@ namespace PaintStore.API.Controllers
         [HttpDelete("{id:int:min(1)}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == id, cancellationToken);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _dbContext.Users.Remove(user);
             try
             {
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                int affectedRows = await _dbContext.Users.Where(u=>u.Id == id)
+                                                .ExecuteDeleteAsync(cancellationToken);
+                if(affectedRows == 0)
+                {
+                    return NotFound();
+                }
             }
-            catch(DbUpdateConcurrencyException)
-            {
-                return NoContent();
-            }
-            catch(DbUpdateException exception)
-                when( exception.InnerException is SqlException sqlException
-                    && sqlException.Number == 547)
+            catch(SqlException sqlException)
+                when(sqlException.Number == 547)
             {
                 return Conflict("related data existed"); 
             }
-
             return NoContent();
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] UserCreateRequestDto userDto, CancellationToken cancellationToken)
         {
-            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email, cancellationToken);
+            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim(), cancellationToken);
             if (emailExist)
             {
-                return BadRequest("input Email duplicated");
+                return Conflict("input email is existed");
             }
 
             User user = new User(userDto.Name, userDto.Email, userDto.Phone);
