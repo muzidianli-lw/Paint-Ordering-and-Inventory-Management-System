@@ -2,7 +2,7 @@ using System;
 
 namespace PaintStore.API.DTOs;
 
-public class PaginationResponseDto<T>
+public sealed class PaginationResponseDto<T>
 {
     public List<T> Items { get; set; } = null!;
     public int TotalCount { get; set; }

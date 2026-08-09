@@ -20,7 +20,8 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers([FromQuery] PaginationRequestDto request, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllUsers([FromQuery] PaginationRequestDto request, 
+                                                        CancellationToken cancellationToken)
         {
             var query = _dbContext.Users.OrderBy(u=>u.Id);
 
@@ -74,7 +75,9 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpPut("{id:int:min(1)}")]
-        public async Task<IActionResult> Put([FromRoute] int id, [FromBody] UserUpdateRequestDto userDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Put([FromRoute] int id, 
+                                                [FromBody] UserUpdateRequestDto userDto, 
+                                                CancellationToken cancellationToken)
         {
             User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == id, cancellationToken);
             if (user == null)
@@ -82,7 +85,8 @@ namespace PaintStore.API.Controllers
                 return NotFound();
             }
 
-            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim() && u.Id != user.Id, cancellationToken);
+            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim() 
+                                                                && u.Id != user.Id, cancellationToken);
             if (emailExist)
             {
                 return Conflict("input email is existed");
@@ -140,9 +144,11 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] UserCreateRequestDto userDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] UserCreateRequestDto userDto, 
+                                                CancellationToken cancellationToken)
         {
-            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim(), cancellationToken);
+            bool emailExist = await _dbContext.Users.AnyAsync(u=>u.Email == userDto.Email.Trim(), 
+                                                                cancellationToken);
             if (emailExist)
             {
                 return Conflict("input email is existed");
