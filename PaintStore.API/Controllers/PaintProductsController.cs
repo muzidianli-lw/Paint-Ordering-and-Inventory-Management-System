@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
+using PaintStore.API.DTOs;
 using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
@@ -22,57 +24,58 @@ namespace PaintStore.API.Controllers
             return Ok(await _dbContext.PaintProducts.ToListAsync(cancellationToken));
         }
 
-        [HttpGet("by-price")]
-        public async Task<ActionResult> GetProductsByPriceRange([FromQuery] decimal min, [FromQuery] decimal max, CancellationToken cancellationToken)
+        [HttpGet("{id:int:min(1)}")]
+        public async Task<IActionResult> GetPaintProduct([FromRoute] int id, CancellationToken cancellationToken)
         {
-            if (min < 0)
-            {
-                return BadRequest("min < 0");
-            }
-            if (max <= min)
-            {
-                return BadRequest("max <= min");
-            }
-            var query = _dbContext.PaintProducts.Where(p=>p.Price < max && p.Price > min);
-            return Ok(await query.ToListAsync(cancellationToken));
-        }
-
-        [HttpGet("by-paint-id/{paintId:int}")]
-        public async Task<IActionResult> GetPaintProductsByPaintId([FromRoute] int paintId, CancellationToken cancellationToken)
-        {
-            if (paintId < 0)
-            {
-                return BadRequest("paintId < 0");
-            }
-
-            PaintProduct? paintProduct = await _dbContext.PaintProducts.FirstOrDefaultAsync(p=>p.Id == paintId, cancellationToken);
-            if (paintProduct == null)
+            PaintProductResponseDto? response = await _dbContext.PaintProducts.Where(p=>p.Id == id)
+                                                                                .Select(p=>new PaintProductResponseDto()
+                                                                                        {Id=p.Id,
+                                                                                        Name=p.Name,
+                                                                                        Brand=p.Brand,
+                                                                                        Price=p.Price,
+                                                                                        Inventory=p.Inventory,
+                                                                                        RowVersion=p.RowVersion})
+                                                                                .FirstOrDefaultAsync(cancellationToken);
+            if (response == null)
             {
                 return NotFound();
             }
 
-            return Ok(paintProduct);
-        }
-
-        [HttpGet("by-user-id/{userId:int}")]
-        public async Task<ActionResult> GetPaintProductsByUserId([FromRoute] int userId, CancellationToken cancellationToken)
-        {
-            if (userId < 0)
-            {
-                return BadRequest("userId < 0");
-            }
-            var query = _dbContext.Orders.Where(o=>o.UserId == userId).SelectMany(o=>o.PaintProducts);
-            List<PaintProduct> paintProducts = await query.ToListAsync(cancellationToken);
-            return Ok(paintProducts.DistinctBy(p=>p.Id).ToList());
+            return Ok(response);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatPaintProduct([FromBody] PaintProduct paintProduct, CancellationToken cancellationToken)
+        public async Task<IActionResult> CreatPaintProduct([FromBody] PaintProductCreateRequestDto request, 
+                                                            CancellationToken cancellationToken)
         {
-            PaintProduct paintProductUsed = new PaintProduct(paintProduct.Name, paintProduct.Price);
-            _dbContext.PaintProducts.Add(paintProductUsed);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return CreatedAtAction(nameof(GetPaintProductsByPaintId), new {paintId=paintProductUsed.Id}, paintProductUsed);
+            bool existed = await _dbContext.PaintProducts.AnyAsync(p=>p.Name == request.Name.Trim(), cancellationToken);
+            if (existed)
+            {
+                return Conflict("this name paintproduct is existed");
+            }
+
+            PaintProduct paintProduct = new PaintProduct(request.Name, request.Price, request.Brand, request.Inventory);
+
+            _dbContext.PaintProducts.Add(paintProduct);
+
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException exception)
+                when (exception.InnerException is SqlException sqlException
+                        && sqlException.Number == 2601)
+            {
+                return Conflict("this name paintproduct is existed");
+            }
+
+            return CreatedAtAction(nameof(GetPaintProduct), new {paintProduct.Id}, 
+                                    new PaintProductResponseDto(){Id=paintProduct.Id,
+                                                                    Name=paintProduct.Name,
+                                                                    Brand=paintProduct.Brand,
+                                                                    Price=paintProduct.Price,
+                                                                    Inventory=paintProduct.Inventory,
+                                                                    RowVersion=paintProduct.RowVersion});
         }
     }
 }
