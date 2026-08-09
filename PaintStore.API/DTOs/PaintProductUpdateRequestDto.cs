@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaintStore.API.DTOs;
 
-public sealed class PaintProductCreateRequestDto
+public sealed class PaintProductUpdateRequestDto
 {
     [Required]
     [MaxLength(256)]
@@ -17,4 +17,8 @@ public sealed class PaintProductCreateRequestDto
     [Required]
     [Range(1, int.MaxValue)]
     public int Inventory { get; set; }
+    [Required]
+    [MinLength(8)]
+    [MaxLength(8)]
+    public byte[] RowVersion { get; set; } = null!;
 }
