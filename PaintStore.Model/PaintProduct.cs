@@ -18,7 +18,18 @@ public class PaintProduct
         
     }
 
+    public void Update(string name, decimal price, string brand, int inventory)
+    {
+        CheckAndUpdateData(name, price, brand, inventory);
+    }
+
     public PaintProduct(string name, decimal price, string brand, int inventory)
+    {
+        CheckAndUpdateData(name, price, brand, inventory);
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    private void CheckAndUpdateData(string name, decimal price, string brand, int inventory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(brand);
@@ -29,6 +40,5 @@ public class PaintProduct
         Brand = brand.Trim();
         Price = price;
         Inventory = inventory;
-        CreatedAt = DateTime.UtcNow;
     }
 }
