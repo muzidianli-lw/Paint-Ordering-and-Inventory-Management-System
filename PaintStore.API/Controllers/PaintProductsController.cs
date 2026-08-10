@@ -21,7 +21,44 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetAllPaintProducts([FromQuery] PaginationRequestDto request, 
+        public async Task<ActionResult> GetKeysetPagination([FromQuery] PaginationKeysetRequestDto request, 
+                                                            CancellationToken cancellationToken)
+        {
+            IQueryable<PaintProduct> query = _dbContext.PaintProducts;
+            if(request.LastPageEndId is int lastPageEndId)
+            {
+                query = query.Where(p=>p.Id > lastPageEndId);
+            }
+
+            List<PaintProductResponseDto> paintProducts = await query.OrderBy(p=>p.Id)
+                                                                    .Take(request.PageSize + 1)
+                                                                    .Select(p=>new PaintProductResponseDto()
+                                                                                {Id=p.Id,
+                                                                                Name=p.Name,
+                                                                                Brand=p.Brand,
+                                                                                Price=p.Price,
+                                                                                Inventory=p.Inventory,
+                                                                                RowVersion=p.RowVersion
+                                                                                })
+                                                                    .ToListAsync(cancellationToken);
+            
+            bool hasNextPage = paintProducts.Count() > request.PageSize;
+            if(hasNextPage)
+            {
+                paintProducts.RemoveAt(request.PageSize);   
+            }
+            int? thisPageEndId = hasNextPage ? paintProducts[^1].Id: null;           
+
+            return Ok(new PaginationKeysetResponseDto<PaintProductResponseDto>()
+                        {   
+                            Items = paintProducts,
+                            HasNextPage=hasNextPage,
+                            ThisPageEndId=thisPageEndId
+                        });
+        }
+
+        [HttpGet("page")]
+        public async Task<ActionResult> GetOffsetPagination([FromQuery] PaginationOffsetRequestDto request, 
                                                             CancellationToken cancellationToken)
         {
             long startIndex = ((long)request.Page - 1) * request.PageSize;
@@ -29,6 +66,10 @@ namespace PaintStore.API.Controllers
             {
                 return BadRequest("page input error");
             }
+
+            await using var transaction = 
+                await _dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot, 
+                                                                cancellationToken);
 
             List<PaintProductResponseDto> items = await _dbContext.PaintProducts
                                                         .OrderBy(p=>p.Id)
@@ -45,10 +86,31 @@ namespace PaintStore.API.Controllers
 
             int totalCount = await _dbContext.PaintProducts.CountAsync(cancellationToken);
 
-            return Ok(new PaginationResponseDto<PaintProductResponseDto> (){Items = items,
+            await transaction.CommitAsync(cancellationToken);
+
+            return Ok(new PaginationOffsetResponseDto<PaintProductResponseDto> (){Items = items,
                                                                             TotalCount=totalCount,
                                                                             Page = request.Page,
                                                                             PageSize = request.PageSize});
+        }
+
+        [HttpDelete("{id:int:min(1)}")]
+        public async Task<IActionResult> DeletePaintProduct([FromRoute] int id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                int affectedRow = await _dbContext.PaintProducts.Where(p=>p.Id == id).ExecuteDeleteAsync(cancellationToken);
+                if (affectedRow == 0)
+                {
+                    return NotFound();
+                }
+            }
+            catch (SqlException sqlException)
+                when(sqlException.Number == 547)
+            {
+                    return Conflict("related data exsisted");
+            }
+            return NoContent();
         }
 
         [HttpGet("{id:int:min(1)}")]

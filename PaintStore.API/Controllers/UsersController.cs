@@ -20,7 +20,7 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers([FromQuery] PaginationRequestDto request, 
+        public async Task<IActionResult> GetAllUsers([FromQuery] PaginationOffsetRequestDto request, 
                                                         CancellationToken cancellationToken)
         {
             var query = _dbContext.Users.OrderBy(u=>u.Id);
@@ -45,7 +45,7 @@ namespace PaintStore.API.Controllers
             
             int totalCount = await query.CountAsync(cancellationToken);
 
-            return Ok(new PaginationResponseDto<UserResponseDto>()
+            return Ok(new PaginationOffsetResponseDto<UserResponseDto>()
             {
                 Items = users,
                 Page = request.Page,

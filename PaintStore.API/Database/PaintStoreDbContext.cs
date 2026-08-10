@@ -47,9 +47,7 @@ public class PaintStoreDbContext: DbContext
                             .WithMany()
                             .OnDelete(DeleteBehavior.Restrict),
                         r=>r.HasOne(typeof(Order))
-                            .WithMany()
-                            .OnDelete(DeleteBehavior.Restrict) 
-                    );
+                            .WithMany());
 
         modelBuilder.Entity<User>()
                     .Property(u=>u.RowVersion)

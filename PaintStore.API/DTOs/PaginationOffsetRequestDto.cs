@@ -4,7 +4,7 @@ using System.Transactions;
 
 namespace PaintStore.API.DTOs;
 
-public sealed class PaginationRequestDto
+public sealed class PaginationOffsetRequestDto
 {
     [Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
