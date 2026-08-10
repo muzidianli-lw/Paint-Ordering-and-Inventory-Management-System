@@ -77,12 +77,12 @@ namespace PaintStore.API.Controllers
                                                         .Skip((int)startIndex)
                                                         .Take(request.PageSize)
                                                         .Select(p=>new PaintProductResponseDto()
-                                                                            {Id=p.Id,
-                                                                            Name=p.Name,
-                                                                            Brand=p.Brand,
-                                                                            Price=p.Price,
-                                                                            Inventory=p.Inventory,
-                                                                            RowVersion=p.RowVersion})
+                                                                    {Id=p.Id,
+                                                                    Name=p.Name,
+                                                                    Brand=p.Brand,
+                                                                    Price=p.Price,
+                                                                    Inventory=p.Inventory,
+                                                                    RowVersion=p.RowVersion})
                                                         .ToListAsync(cancellationToken);
 
             int totalCount = await _dbContext.PaintProducts.CountAsync(cancellationToken);
