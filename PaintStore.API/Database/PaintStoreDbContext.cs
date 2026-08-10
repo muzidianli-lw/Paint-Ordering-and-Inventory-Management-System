@@ -38,6 +38,18 @@ public class PaintStoreDbContext: DbContext
                     .HasOne(o=>o.User)
                     .WithMany()
                     .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Order>()
+                    .HasMany(o=>o.PaintProducts)
+                    .WithMany()
+                    .UsingEntity(
+                        l=>l.HasOne(typeof(PaintProduct))
+                            .WithMany()
+                            .OnDelete(DeleteBehavior.Restrict),
+                        r=>r.HasOne(typeof(Order))
+                            .WithMany()
+                            .OnDelete(DeleteBehavior.Restrict) 
+                    );
 
         modelBuilder.Entity<User>()
                     .Property(u=>u.RowVersion)
