@@ -1,3 +1,4 @@
+using System.Data;
 using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
@@ -68,7 +69,7 @@ namespace PaintStore.API.Controllers
             }
 
             await using var transaction = 
-                await _dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.Snapshot, 
+                await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, 
                                                                 cancellationToken);
 
             List<PaintProductResponseDto> items = await _dbContext.PaintProducts
@@ -76,12 +77,12 @@ namespace PaintStore.API.Controllers
                                                         .Skip((int)startIndex)
                                                         .Take(request.PageSize)
                                                         .Select(p=>new PaintProductResponseDto()
-                                                                                        {Id=p.Id,
-                                                                                        Name=p.Name,
-                                                                                        Brand=p.Brand,
-                                                                                        Price=p.Price,
-                                                                                        Inventory=p.Inventory,
-                                                                                        RowVersion=p.RowVersion})
+                                                                            {Id=p.Id,
+                                                                            Name=p.Name,
+                                                                            Brand=p.Brand,
+                                                                            Price=p.Price,
+                                                                            Inventory=p.Inventory,
+                                                                            RowVersion=p.RowVersion})
                                                         .ToListAsync(cancellationToken);
 
             int totalCount = await _dbContext.PaintProducts.CountAsync(cancellationToken);
