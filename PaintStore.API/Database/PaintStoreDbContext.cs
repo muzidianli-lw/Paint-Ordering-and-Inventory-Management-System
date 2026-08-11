@@ -40,6 +40,10 @@ public class PaintStoreDbContext: DbContext
                     .OnDelete(DeleteBehavior.Restrict);
         
         modelBuilder.Entity<Order>()
+                    .Property(o=>o.TotalPrice)
+                    .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Order>()
                     .HasMany(o=>o.PaintProducts)
                     .WithMany()
                     .UsingEntity(
@@ -48,6 +52,10 @@ public class PaintStoreDbContext: DbContext
                             .OnDelete(DeleteBehavior.Restrict),
                         r=>r.HasOne(typeof(Order))
                             .WithMany());
+
+        modelBuilder.Entity<Order>()
+                    .Property(o=>o.RowVersion)
+                    .IsRowVersion();
 
         modelBuilder.Entity<User>()
                     .Property(u=>u.RowVersion)
