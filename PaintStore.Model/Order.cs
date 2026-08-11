@@ -25,15 +25,26 @@ public class Order
 
     }
 
-    public Order(int userId, User user, List<PaintProduct> paintProducts)
+    public void Update(List<PaintProduct> paintProducts)
+    {
+        UpdateData(paintProducts);
+    }
+
+    private void UpdateData(List<PaintProduct> paintProducts)
     {
         ArgumentNullException.ThrowIfNull(paintProducts);
-        ArgumentOutOfRangeException.ThrowIfLessThan(userId, 0);
+        _paintProducts.Clear();
+        _paintProducts.AddRange(paintProducts);
+        TotalPrice = _paintProducts.Sum(p=>p.Price);     
+    }
 
-        _paintProducts = paintProducts.ToList();
+    public Order(int userId, User user, List<PaintProduct> paintProducts)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(userId, 0);
         UserId = userId;
         User = user;
         CreatedAt = DateTime.UtcNow;
-        TotalPrice = _paintProducts.Sum(p=>p.Price);
+
+        UpdateData(paintProducts);
     }
 }
