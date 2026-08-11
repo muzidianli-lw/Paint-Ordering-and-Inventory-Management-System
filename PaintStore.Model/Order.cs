@@ -9,14 +9,16 @@ public class Order
     public int Id { get; private set; }
     public DateTime CreatedAt { get; private init; }
 
-    public int UserId { get; private init; }
+    public int UserId { get; init; }
 
-    public User User { get; private init; } = null!;
+    public User User { get; init; } = null!;
 
     private readonly List<PaintProduct> _paintProducts = [];
     public IReadOnlyList<PaintProduct> PaintProducts => _paintProducts;
 
-    public decimal TotalPrice => PaintProducts.Sum(p=>p.Price);
+    public decimal TotalPrice { get; private set; }
+
+    public byte[] RowVersion { get; private set; } = null!;
 
     private Order()
     {
@@ -32,5 +34,6 @@ public class Order
         UserId = userId;
         User = user;
         CreatedAt = DateTime.UtcNow;
+        TotalPrice = _paintProducts.Sum(p=>p.Price);
     }
 }
