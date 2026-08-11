@@ -11,7 +11,7 @@ public class PaintProduct
     public int Inventory { get; private set; }
     public DateTime CreatedAt {get; private init;}
 
-    public byte[] RowVersion { get; set; } = null!;
+    public byte[] RowVersion { get; private set; } = null!;
 
     private PaintProduct()
     {
