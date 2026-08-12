@@ -139,7 +139,7 @@ namespace PaintStore.API.Controllers
             {
                 return Conflict("related paintproduct is deleted");
             }
-            return Ok(new OrderResponseDto(order));
+            return Ok(OrderResponseDto.FromEntity(order));
         }
 
         [HttpGet("{id:int:min(1)}")]
@@ -223,7 +223,7 @@ namespace PaintStore.API.Controllers
                 return Conflict("related data is deleted");
             }
 
-            return CreatedAtAction(nameof(GetOrderById), new {order.Id}, new OrderResponseDto(order));            
+            return CreatedAtAction(nameof(GetOrderById), new {order.Id}, OrderResponseDto.FromEntity(order));            
         }
     }
 }
