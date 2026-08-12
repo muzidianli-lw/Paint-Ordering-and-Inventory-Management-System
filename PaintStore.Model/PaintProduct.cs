@@ -10,7 +10,6 @@ public class PaintProduct
     public decimal Price { get; private set;}
     public int Inventory { get; private set; }
     public DateTime CreatedAt {get; private init;}
-
     public byte[] RowVersion { get; private set; } = null!;
 
     private PaintProduct()
