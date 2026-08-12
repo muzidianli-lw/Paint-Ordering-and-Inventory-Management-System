@@ -205,16 +205,9 @@ namespace PaintStore.API.Controllers
             {
                 return BadRequest("order must have paintproducts");
             }
-            List<PaintProduct> paintProducts = [];
-            foreach(var productId in orderDto.PaintProductIds)
-            {
-                PaintProduct? paintProduct = await _dbContext.PaintProducts.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-                if (paintProduct == null)
-                {
-                    return BadRequest("paintproduct id is not found");
-                }
-                paintProducts.Add(paintProduct);
-            }
+            List<PaintProduct> paintProducts = await _dbContext.PaintProducts
+                                                                .Where(p=>orderDto.PaintProductIds.Contains(p.Id))
+                                                                .ToListAsync(cancellationToken);
 
             Order order = new Order(orderDto.UserId, user, paintProducts);
 
