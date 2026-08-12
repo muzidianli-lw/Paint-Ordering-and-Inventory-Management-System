@@ -38,15 +38,7 @@ namespace PaintStore.API.Controllers
                                                                     .Skip((int)offset)
                                                                     .Take(request.PageSize)
                                                                     .AsNoTracking()
-                                                                    .Select(o=>new OrderResponseDto()
-                                                                    {
-                                                                        Id = o.Id,
-                                                                        UserId = o.UserId,
-                                                                        User = o.User,
-                                                                        PaintProducts = o.PaintProducts,
-                                                                        TotalPrice = o.TotalPrice,
-                                                                        RowVersion = o.RowVersion
-                                                                    })
+                                                                    .Select(OrderResponseDto.projection)
                                                                     .ToListAsync(cancellationToken);
             int orderCnt = await _dbContext.Orders.CountAsync(cancellationToken);
 
@@ -75,15 +67,7 @@ namespace PaintStore.API.Controllers
 
             List<OrderResponseDto> orders = await query.Take(request.PageSize + 1)
                                                         .AsNoTracking()
-                                                        .Select(o=>new OrderResponseDto()
-                                                            {
-                                                                Id = o.Id,
-                                                                UserId = o.UserId,
-                                                                User = o.User,
-                                                                PaintProducts = o.PaintProducts,
-                                                                TotalPrice = o.TotalPrice,
-                                                                RowVersion = o.RowVersion
-                                                            })
+                                                        .Select(OrderResponseDto.projection)
                                                         .ToListAsync(cancellationToken);
 
             bool hasNextPage = orders.Count > request.PageSize;
@@ -163,15 +147,7 @@ namespace PaintStore.API.Controllers
                                                         CancellationToken cancellationToken)
         {
             OrderResponseDto? order = await _dbContext.Orders
-                                        .Select(o=>new OrderResponseDto()
-                                            {
-                                                Id = o.Id,
-                                                UserId = o.UserId,
-                                                User = o.User,
-                                                PaintProducts = o.PaintProducts,
-                                                TotalPrice = o.TotalPrice,
-                                                RowVersion = o.RowVersion
-                                            })
+                                        .Select(OrderResponseDto.projection)
                                         .AsNoTracking()
                                         .FirstOrDefaultAsync(o=>o.Id == id, cancellationToken);
             if (order == null)
@@ -200,15 +176,7 @@ namespace PaintStore.API.Controllers
                                                                     .Skip((int)offset)
                                                                     .Take(request.PageSize)
                                                                     .AsNoTracking()
-                                                                    .Select(o=>new OrderResponseDto()
-                                                                    {
-                                                                        Id = o.Id,
-                                                                        UserId = o.UserId,
-                                                                        User = o.User,
-                                                                        PaintProducts = o.PaintProducts,
-                                                                        TotalPrice = o.TotalPrice,
-                                                                        RowVersion = o.RowVersion
-                                                                    })
+                                                                    .Select(OrderResponseDto.projection)
                                                                     .ToListAsync(cancellationToken);
             int orderCnt = await _dbContext.Orders.CountAsync(o=>o.UserId == id, cancellationToken);
 
