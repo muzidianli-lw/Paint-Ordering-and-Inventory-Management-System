@@ -22,8 +22,9 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet("page")]
-        public async Task<ActionResult> GetSpecificPage([FromQuery] PaginationOffsetRequestDto request,
-                                                        CancellationToken cancellationToken)
+        public async Task<ActionResult<PaginationOffsetResponseDto<OrderResponseDto>>>
+            GetSpecificPage([FromQuery] PaginationOffsetRequestDto request,
+                            CancellationToken cancellationToken)
         {
             long offset = ((long)request.Page - 1) * request.PageSize;
             if(offset > int.MaxValue)
@@ -54,8 +55,9 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetNextPage([FromQuery] PaginationKeysetRequestDto request,
-                                                        CancellationToken cancellationToken)
+        public async Task<ActionResult<PaginationKeysetResponseDto<OrderResponseDto>>> 
+            GetNextPage([FromQuery] PaginationKeysetRequestDto request,
+                        CancellationToken cancellationToken)
         {
             
             IQueryable<Order> query = _dbContext.Orders.OrderBy(o=>o.Id);
@@ -98,7 +100,7 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpPut("{id:int:min(1)}")]
-        public async Task<ActionResult> UpdateOrder([FromRoute] int id,
+        public async Task<ActionResult<OrderResponseDto>> UpdateOrder([FromRoute] int id,
                                                     [FromBody] OrderUpdateRequestDto request,
                                                     CancellationToken cancellationToken)
         {
@@ -143,7 +145,7 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet("{id:int:min(1)}")]
-        public async Task<IActionResult> GetOrderById([FromRoute] int id,
+        public async Task<ActionResult<OrderResponseDto>> GetOrderById([FromRoute] int id,
                                                         CancellationToken cancellationToken)
         {
             OrderResponseDto? order = await _dbContext.Orders
@@ -158,9 +160,11 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpGet("byUser/{id:int:min(1)}")]
-        public async Task<ActionResult> GetOrdersByUserId([FromRoute] int id,
-                                                            [FromQuery] PaginationOffsetRequestDto request,
-                                                            CancellationToken cancellationToken)
+        public async Task<ActionResult<PaginationOffsetResponseDto<OrderResponseDto>>> 
+            GetOrdersByUserId(
+                [FromRoute] int id,
+                [FromQuery] PaginationOffsetRequestDto request,
+                CancellationToken cancellationToken)
         {
             long offset = ((long)request.Page - 1) * request.PageSize;
             if(offset > int.MaxValue)
@@ -201,10 +205,6 @@ namespace PaintStore.API.Controllers
                 return BadRequest("user id not found");
             }
 
-            if (orderDto.PaintProductIds.Count <= 0)
-            {
-                return BadRequest("order must have paintproducts");
-            }
             List<PaintProduct> paintProducts = await _dbContext.PaintProducts
                                                                 .Where(p=>orderDto.PaintProductIds.Contains(p.Id))
                                                                 .ToListAsync(cancellationToken);

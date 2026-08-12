@@ -40,7 +40,7 @@ public class Order
 
     public Order(int userId, User user, List<PaintProduct> paintProducts)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(userId, 0);
+        ArgumentOutOfRangeException.ThrowIfLessThan(userId, 1);
         UserId = userId;
         User = user;
         CreatedAt = DateTime.UtcNow;

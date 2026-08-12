@@ -30,6 +30,7 @@ public sealed class OrderResponseDto
                                                                             Name = o.User.Name
                                                                         },
                                                     PaintProducts = o.PaintProducts
+                                                                    .OrderBy(p=>p.Id)
                                                                     .Select(p=>new OrderPaintProductDto{
                                                                         Id = p.Id,
                                                                         Name = p.Name,
