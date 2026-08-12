@@ -38,7 +38,7 @@ namespace PaintStore.API.Controllers
                                                                     .Skip((int)offset)
                                                                     .Take(request.PageSize)
                                                                     .AsNoTracking()
-                                                                    .Select(OrderResponseDto.projection)
+                                                                    .Select(OrderResponseDto.Projection)
                                                                     .ToListAsync(cancellationToken);
             int orderCnt = await _dbContext.Orders.CountAsync(cancellationToken);
 
@@ -67,7 +67,7 @@ namespace PaintStore.API.Controllers
 
             List<OrderResponseDto> orders = await query.Take(request.PageSize + 1)
                                                         .AsNoTracking()
-                                                        .Select(OrderResponseDto.projection)
+                                                        .Select(OrderResponseDto.Projection)
                                                         .ToListAsync(cancellationToken);
 
             bool hasNextPage = orders.Count > request.PageSize;
@@ -147,7 +147,7 @@ namespace PaintStore.API.Controllers
                                                         CancellationToken cancellationToken)
         {
             OrderResponseDto? order = await _dbContext.Orders
-                                        .Select(OrderResponseDto.projection)
+                                        .Select(OrderResponseDto.Projection)
                                         .AsNoTracking()
                                         .FirstOrDefaultAsync(o=>o.Id == id, cancellationToken);
             if (order == null)
@@ -176,7 +176,7 @@ namespace PaintStore.API.Controllers
                                                                     .Skip((int)offset)
                                                                     .Take(request.PageSize)
                                                                     .AsNoTracking()
-                                                                    .Select(OrderResponseDto.projection)
+                                                                    .Select(OrderResponseDto.Projection)
                                                                     .ToListAsync(cancellationToken);
             int orderCnt = await _dbContext.Orders.CountAsync(o=>o.UserId == id, cancellationToken);
 

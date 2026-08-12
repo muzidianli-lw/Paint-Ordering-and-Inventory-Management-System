@@ -18,7 +18,7 @@ public sealed class OrderResponseDto
 
     public byte[] RowVersion { get; set; } = null!;
 
-    public static readonly Expression<Func<Order, OrderResponseDto>> projection =
+    public static readonly Expression<Func<Order, OrderResponseDto>> Projection =
                                                 o => new OrderResponseDto
                                                 {
                                                     Id = o.Id,
