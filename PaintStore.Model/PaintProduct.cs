@@ -38,6 +38,16 @@ public class PaintProduct
         return cnt;
     }
 
+    public int AddInventory(int cnt)
+    {
+        if(cnt < 0)
+        {
+            return -1;
+        }
+        Inventory += cnt;
+        return cnt;
+    }
+
     public void Update(string name, decimal price, string brand, int inventory)
     {
         CheckAndUpdateData(name, price, brand, inventory);

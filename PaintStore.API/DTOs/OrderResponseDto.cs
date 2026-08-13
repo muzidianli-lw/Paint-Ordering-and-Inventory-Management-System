@@ -35,8 +35,7 @@ public sealed class OrderResponseDto
                                                             PaintProductId = i.PaintProductId,
                                                             Name = i.PaintProduct.Name,
                                                             UnitPrice = i.UnitPrice,
-                                                            Quantity = i.Quantity,
-                                                            RowVersion=i.RowVersion})
+                                                            Quantity = i.Quantity})
                                                         .ToList(),
                                         TotalPrice = o.TotalPrice,
                                         RowVersion = o.RowVersion

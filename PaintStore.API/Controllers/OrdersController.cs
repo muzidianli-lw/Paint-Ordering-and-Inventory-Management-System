@@ -101,7 +101,7 @@ namespace PaintStore.API.Controllers
             }
             return NoContent();
         }
-/*
+
         [HttpPut("{id:int:min(1)}")]
         public async Task<ActionResult<OrderResponseDto>> UpdateOrder([FromRoute] int id,
                                                     [FromBody] OrderUpdateRequestDto request,
@@ -109,17 +109,57 @@ namespace PaintStore.API.Controllers
         {
             Order? order = await _dbContext.Orders
                                             .Include(o=>o.User)
-                                            .Include(o=>o.PaintProducts)
+                                            .Include(o=>o.OrderItems)
                                             .FirstOrDefaultAsync(o=>o.Id == id, cancellationToken);
             if (order == null)
             {
                 return NotFound();
             }
 
-            List<PaintProduct> paintProducts = await _dbContext.PaintProducts
-                                                        .Where(p=>request.PaintProductIds.Contains(p.Id))
-                                                        .ToListAsync(cancellationToken);
-            order.Update(paintProducts);
+            Dictionary<int, int> oldIdToCnt = order.OrderItems.ToDictionary(o=>o.PaintProductId, o=>o.Quantity);
+            Dictionary<int, int> newIdToCnt = request.OrderItems
+                                                    .GroupBy(i=>i.PaintProductId)
+                                                    .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Quantity));
+
+            Dictionary<int, PaintProduct> newIdToPaintProducts= await _dbContext.PaintProducts
+                                                .Where(p=>newIdToCnt.Keys.Contains(p.Id))
+                                                .ToDictionaryAsync(p=>p.Id, p=>p, cancellationToken);
+
+            if (newIdToPaintProducts.Keys.Count != newIdToCnt.Keys.Count)
+            {
+                return Conflict("some paint product not existed");
+            }
+
+            List<int> onlyOldIds = order.OrderItems.Where(o=>!newIdToCnt.Keys.Contains(o.PaintProductId))
+                                                                            .Select(o=>o.PaintProductId)
+                                                                            .ToList();
+            Dictionary<int, PaintProduct> onlyOldIdToPaintProducts = await _dbContext.PaintProducts
+                                                .Where(p=>onlyOldIds.Contains(p.Id))
+                                                .ToDictionaryAsync(p=>p.Id, p=>p, cancellationToken);
+
+            Dictionary<int, PaintProduct> idToPaintProducts = newIdToPaintProducts.Concat(onlyOldIdToPaintProducts)
+                                                            .ToDictionary(x => x.Key, x => x.Value);
+            
+            foreach (var oldId in oldIdToCnt.Keys)
+            {
+                idToPaintProducts[oldId].AddInventory(oldIdToCnt[oldId]);
+            }
+
+            List<OrderItem> items = []; 
+            foreach (var newId in newIdToCnt.Keys)
+            {
+                int CntRedused = idToPaintProducts[newId].ReduceInventory(newIdToCnt[newId]);
+                if (CntRedused != newIdToCnt[newId])
+                {
+                    return Conflict("some paint product is not enough");
+                }
+                items.Add(new OrderItem(){PaintProductId = idToPaintProducts[newId].Id,
+                                            Quantity = newIdToCnt[newId],
+                                            PaintProduct = idToPaintProducts[newId],
+                                            UnitPrice = idToPaintProducts[newId].Price});
+            }
+
+            order.Update(items);
 
             _dbContext.Entry(order)
                     .Property(o=>o.RowVersion)
@@ -146,9 +186,9 @@ namespace PaintStore.API.Controllers
             }
             return Ok(OrderResponseDto.FromEntity(order));
         }
-*/
+
         [HttpGet("{id:int:min(1)}")]
-        public async Task<ActionResult<OrderResponseDto>> GetOrderById([FromRoute] int id,
+        public async Task<ActionResult<OrderResponseDto>> GetOrderByOrderId([FromRoute] int id,
                                                         CancellationToken cancellationToken)
         {
             OrderResponseDto? order = await _dbContext.Orders
@@ -169,6 +209,12 @@ namespace PaintStore.API.Controllers
                 [FromQuery] PaginationOffsetRequestDto request,
                 CancellationToken cancellationToken)
         {
+            bool userExisted = await _dbContext.Users.AnyAsync(u=>u.Id == id, cancellationToken);
+            if(!userExisted)
+            {
+                return NotFound();
+            }
+
             long offset = ((long)request.Page - 1) * request.PageSize;
             if(offset > int.MaxValue)
             {
@@ -213,13 +259,11 @@ namespace PaintStore.API.Controllers
                                             .GroupBy(i=>i.PaintProductId)
                                             .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Quantity));
 
-            List<int> newItemIds = newItemIdCnt.Select(i=>i.Key).ToList();
-
             List<PaintProduct> paintProducts= await _dbContext.PaintProducts
-                                                .Where(p=>newItemIds.Contains(p.Id))
+                                                .Where(p=>newItemIdCnt.Keys.Contains(p.Id))
                                                 .ToListAsync(cancellationToken);
 
-            if (paintProducts.Count != newItemIds.Count)
+            if (paintProducts.Count != newItemIdCnt.Keys.Count)
             {
                 return Conflict("some paint product not existed");
             }
@@ -230,23 +274,16 @@ namespace PaintStore.API.Controllers
                 return Conflict("some paint product inventory is not enough");
             }
 
+            List<OrderItem> orderItems = [];
             foreach(var paintProduct in paintProducts)
             {
                 paintProduct.ReduceInventory(newItemIdCnt[paintProduct.Id]);
+                orderItems.Add(new OrderItem(){PaintProductId = paintProduct.Id,
+                                                Quantity = newItemIdCnt[paintProduct.Id],
+                                                PaintProduct = paintProduct,
+                                                UnitPrice = paintProduct.Price});
             }
 
-            Dictionary<int, PaintProduct> IdPaintProduct = 
-                                        paintProducts.ToDictionary(p=>p.Id, p=>p);
-
-            List<OrderItem> orderItems = paintProducts
-                                        .Select(p=>new OrderItem()
-                                        {
-                                            PaintProductId = p.Id,
-                                            Quantity = newItemIdCnt[p.Id],
-                                            PaintProduct = p,
-                                            UnitPrice = p.Price
-                                        })
-                                        .ToList();
             Order order = new Order(orderDto.UserId, user, orderItems);
 
             _dbContext.Orders.Add(order);
@@ -265,7 +302,7 @@ namespace PaintStore.API.Controllers
                 return Conflict("related data is deleted");
             }
 
-            return CreatedAtAction(nameof(GetOrderById), new {order.Id}, OrderResponseDto.FromEntity(order));            
+            return CreatedAtAction(nameof(GetOrderByOrderId), new {order.Id}, OrderResponseDto.FromEntity(order));            
         }
     }
 }

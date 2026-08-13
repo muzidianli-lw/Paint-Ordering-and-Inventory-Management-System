@@ -7,7 +7,7 @@ public class OrderUpdateRequestDto
 {
     [Required]
     [Length(1, int.MaxValue)]
-    public List<int> PaintProductIds { get; set; } = [];
+    public List<OrderItemCreateRequestDto> OrderItems { get; set; } = [];
 
     [Required]
     [MinLength(8)]

@@ -9,7 +9,7 @@ public class Order
 {
     public int Id { get; private set; }
     public DateTime CreatedAt { get; private init; }
-
+    public DateTime UpdatedAt { get; private set; }
     public int UserId { get; init; }
 
     public User User { get; init; } = null!;
@@ -45,6 +45,7 @@ public class Order
         _orderItems.Clear();
         _orderItems.AddRange(items);
         TotalPrice = _orderItems.Sum(p=>p.UnitPrice * p.Quantity);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public Order(int userId, User user, List<OrderItem> items)

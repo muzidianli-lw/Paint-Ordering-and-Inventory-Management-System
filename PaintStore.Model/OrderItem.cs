@@ -10,7 +10,6 @@ public class OrderItem
     public PaintProduct PaintProduct { get; set; } = null!;
     public decimal UnitPrice { get; init; }
     private int _quantity;
-    public byte[] RowVersion { get; set; } = null!;
 
     public int Quantity {
         get=>_quantity;

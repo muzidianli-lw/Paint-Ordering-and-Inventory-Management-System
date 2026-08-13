@@ -23,9 +23,6 @@ public class PaintStoreDbContext: DbContext
                     .Property(p=>p.UnitPrice)
                     .HasPrecision(18, 2);
         modelBuilder.Entity<OrderItem>()
-                    .Property(p=>p.RowVersion)
-                    .IsRowVersion();
-        modelBuilder.Entity<OrderItem>()
                     .HasOne(o=>o.PaintProduct)
                     .WithMany()
                     .OnDelete(DeleteBehavior.Restrict);
