@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using System.Transactions;
 
 namespace PaintStore.Models;
@@ -13,8 +14,8 @@ public class Order
 
     public User User { get; init; } = null!;
 
-    private readonly List<PaintProduct> _paintProducts = [];
-    public IReadOnlyList<PaintProduct> PaintProducts => _paintProducts;
+    private readonly List<OrderItem> _orderItems = [];
+    public IReadOnlyList<OrderItem> OrderItems => _orderItems;
 
     public decimal TotalPrice { get; private set; }
 
@@ -25,26 +26,37 @@ public class Order
 
     }
 
-    public void Update(List<PaintProduct> paintProducts)
+    public void Update(List<OrderItem> items)
     {
-        UpdateData(paintProducts);
+        UpdateData(items);
     }
 
-    private void UpdateData(List<PaintProduct> paintProducts)
+    private void UpdateData(List<OrderItem> items)
     {
-        ArgumentNullException.ThrowIfNull(paintProducts);
-        _paintProducts.Clear();
-        _paintProducts.AddRange(paintProducts);
-        TotalPrice = _paintProducts.Sum(p=>p.Price);     
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentOutOfRangeException.ThrowIfEqual(items.Count, 0);
+        foreach (OrderItem item in items)
+        {
+            ArgumentNullException.ThrowIfNull(item.PaintProduct);
+            ArgumentOutOfRangeException.ThrowIfLessThan(item.PaintProductId, 1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(item.Quantity, 1);
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(item.UnitPrice, 0);
+        }
+        _orderItems.Clear();
+        _orderItems.AddRange(items);
+        TotalPrice = _orderItems.Sum(p=>p.UnitPrice * p.Quantity);
     }
 
-    public Order(int userId, User user, List<PaintProduct> paintProducts)
+    public Order(int userId, User user, List<OrderItem> items)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(userId, 1);
+        ArgumentNullException.ThrowIfNull(user);
+        ArgumentOutOfRangeException.ThrowIfNotEqual(userId, user.Id);
+
         UserId = userId;
         User = user;
         CreatedAt = DateTime.UtcNow;
 
-        UpdateData(paintProducts);
+        UpdateData(items);
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.Models;
+using System.Collections.Immutable;
 
 namespace PaintStore.API.Controllers
 {
@@ -32,15 +33,17 @@ namespace PaintStore.API.Controllers
                 return BadRequest("input page too large");
             }
 
-            await using var transaction = 
-                await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
+            await using var transaction = await _dbContext.Database
+                                                .BeginTransactionAsync(IsolationLevel.Snapshot,
+                                                                        cancellationToken);
 
-            List<OrderResponseDto> orders = await _dbContext.Orders.OrderBy(o=>o.Id)
-                                                                    .Skip((int)offset)
-                                                                    .Take(request.PageSize)
-                                                                    .AsNoTracking()
-                                                                    .Select(OrderResponseDto.Projection)
-                                                                    .ToListAsync(cancellationToken);
+            List<OrderResponseDto> orders = await _dbContext.Orders
+                                                            .OrderBy(o=>o.Id)
+                                                            .Skip((int)offset)
+                                                            .Take(request.PageSize)
+                                                            .AsNoTracking()
+                                                            .Select(OrderResponseDto.Projection)
+                                                            .ToListAsync(cancellationToken);
             int orderCnt = await _dbContext.Orders.CountAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
@@ -98,7 +101,7 @@ namespace PaintStore.API.Controllers
             }
             return NoContent();
         }
-
+/*
         [HttpPut("{id:int:min(1)}")]
         public async Task<ActionResult<OrderResponseDto>> UpdateOrder([FromRoute] int id,
                                                     [FromBody] OrderUpdateRequestDto request,
@@ -143,7 +146,7 @@ namespace PaintStore.API.Controllers
             }
             return Ok(OrderResponseDto.FromEntity(order));
         }
-
+*/
         [HttpGet("{id:int:min(1)}")]
         public async Task<ActionResult<OrderResponseDto>> GetOrderById([FromRoute] int id,
                                                         CancellationToken cancellationToken)
@@ -199,22 +202,61 @@ namespace PaintStore.API.Controllers
         public async Task<IActionResult> CreateOrder([FromBody] OrderCreateRequestDto orderDto,
                                                     CancellationToken cancellationToken)
         {
-            User? user = await _dbContext.Users.FirstOrDefaultAsync(u=>u.Id == orderDto.UserId, cancellationToken);
+            User? user = await _dbContext.Users
+                            .FirstOrDefaultAsync(u=>u.Id == orderDto.UserId, cancellationToken);
             if (user == null)
             {
                 return BadRequest("user id not found");
             }
 
-            List<PaintProduct> paintProducts = await _dbContext.PaintProducts
-                                                                .Where(p=>orderDto.PaintProductIds.Contains(p.Id))
-                                                                .ToListAsync(cancellationToken);
+            Dictionary<int, int> newItemIdCnt = orderDto.Items
+                                            .GroupBy(i=>i.PaintProductId)
+                                            .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Quantity));
 
-            Order order = new Order(orderDto.UserId, user, paintProducts);
+            List<int> newItemIds = newItemIdCnt.Select(i=>i.Key).ToList();
+
+            List<PaintProduct> paintProducts= await _dbContext.PaintProducts
+                                                .Where(p=>newItemIds.Contains(p.Id))
+                                                .ToListAsync(cancellationToken);
+
+            if (paintProducts.Count != newItemIds.Count)
+            {
+                return Conflict("some paint product not existed");
+            }
+
+            bool notEnough = paintProducts.Any(p=>p.Inventory < newItemIdCnt[p.Id]);
+            if (notEnough)
+            {
+                return Conflict("some paint product inventory is not enough");
+            }
+
+            foreach(var paintProduct in paintProducts)
+            {
+                paintProduct.ReduceInventory(newItemIdCnt[paintProduct.Id]);
+            }
+
+            Dictionary<int, PaintProduct> IdPaintProduct = 
+                                        paintProducts.ToDictionary(p=>p.Id, p=>p);
+
+            List<OrderItem> orderItems = paintProducts
+                                        .Select(p=>new OrderItem()
+                                        {
+                                            PaintProductId = p.Id,
+                                            Quantity = newItemIdCnt[p.Id],
+                                            PaintProduct = p,
+                                            UnitPrice = p.Price
+                                        })
+                                        .ToList();
+            Order order = new Order(orderDto.UserId, user, orderItems);
 
             _dbContext.Orders.Add(order);
             try
             {
                 await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict("related data is deleted or changed");
             }
             catch (DbUpdateException exception)
                 when(exception.InnerException is SqlException sqlException

@@ -17,6 +17,27 @@ public class PaintProduct
         
     }
 
+    /*
+    return:
+    -1 输入参数错误
+    >=0 实际减少数量
+    */
+    public int ReduceInventory(int cnt)
+    {
+        if(cnt < 0)
+        {
+            return -1;
+        }
+        if(cnt > Inventory)
+        {
+            int original = Inventory;
+            Inventory = 0;
+            return original;
+        }
+        Inventory -= cnt;
+        return cnt;
+    }
+
     public void Update(string name, decimal price, string brand, int inventory)
     {
         CheckAndUpdateData(name, price, brand, inventory);

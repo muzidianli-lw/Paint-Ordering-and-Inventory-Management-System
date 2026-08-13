@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaintStore.API.Database;
 
@@ -11,9 +12,11 @@ using PaintStore.API.Database;
 namespace PaintStore.API.Migrations
 {
     [DbContext(typeof(PaintStoreDbContext))]
-    partial class PaintStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813083021_DebugOrderItemRelation3")]
+    partial class DebugOrderItemRelation3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

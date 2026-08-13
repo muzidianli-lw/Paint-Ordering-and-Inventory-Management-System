@@ -18,6 +18,23 @@ public class PaintStoreDbContext: DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<OrderItem>()
+                    .Property(p=>p.UnitPrice)
+                    .HasPrecision(18, 2);
+        modelBuilder.Entity<OrderItem>()
+                    .Property(p=>p.RowVersion)
+                    .IsRowVersion();
+        modelBuilder.Entity<OrderItem>()
+                    .HasOne(o=>o.PaintProduct)
+                    .WithMany()
+                    .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Order>()
+                    .HasMany(o=>o.OrderItems)
+                    .WithOne()
+                    .HasForeignKey(o=>o.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<PaintProduct>()
                     .Property(p=>p.Price)
                     .HasPrecision(18, 2);
@@ -42,16 +59,6 @@ public class PaintStoreDbContext: DbContext
         modelBuilder.Entity<Order>()
                     .Property(o=>o.TotalPrice)
                     .HasPrecision(18, 2);
-
-        modelBuilder.Entity<Order>()
-                    .HasMany(o=>o.PaintProducts)
-                    .WithMany()
-                    .UsingEntity(
-                        l=>l.HasOne(typeof(PaintProduct))
-                            .WithMany()
-                            .OnDelete(DeleteBehavior.Restrict),
-                        r=>r.HasOne(typeof(Order))
-                            .WithMany());
 
         modelBuilder.Entity<Order>()
                     .Property(o=>o.RowVersion)

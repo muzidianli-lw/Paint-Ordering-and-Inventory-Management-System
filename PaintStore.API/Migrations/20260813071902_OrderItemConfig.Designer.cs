@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaintStore.API.Database;
 
@@ -11,9 +12,11 @@ using PaintStore.API.Database;
 namespace PaintStore.API.Migrations
 {
     [DbContext(typeof(PaintStoreDbContext))]
-    partial class PaintStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813071902_OrderItemConfig")]
+    partial class OrderItemConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,26 @@ namespace PaintStore.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("OrderOrderItem", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaintProductsId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PaintProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrderId", "PaintProductsId");
+
+                    b.HasIndex("PaintProductId");
+
+                    b.HasIndex("PaintProductsId");
+
+                    b.ToTable("OrderOrderItem");
+                });
 
             modelBuilder.Entity("PaintStore.Models.Order", b =>
                 {
@@ -61,9 +84,6 @@ namespace PaintStore.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
                     b.Property<int>("PaintProductId")
                         .HasColumnType("int");
 
@@ -81,8 +101,6 @@ namespace PaintStore.API.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
 
                     b.HasIndex("PaintProductId");
 
@@ -169,6 +187,26 @@ namespace PaintStore.API.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("OrderOrderItem", b =>
+                {
+                    b.HasOne("PaintStore.Models.Order", null)
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PaintStore.Models.PaintProduct", null)
+                        .WithMany()
+                        .HasForeignKey("PaintProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PaintStore.Models.OrderItem", null)
+                        .WithMany()
+                        .HasForeignKey("PaintProductsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PaintStore.Models.Order", b =>
                 {
                     b.HasOne("PaintStore.Models.User", "User")
@@ -182,23 +220,13 @@ namespace PaintStore.API.Migrations
 
             modelBuilder.Entity("PaintStore.Models.OrderItem", b =>
                 {
-                    b.HasOne("PaintStore.Models.Order", null)
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("PaintStore.Models.PaintProduct", "PaintProduct")
                         .WithMany()
                         .HasForeignKey("PaintProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("PaintProduct");
-                });
-
-            modelBuilder.Entity("PaintStore.Models.Order", b =>
-                {
-                    b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618
         }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PaintStore.API.Database;
 
@@ -11,9 +12,11 @@ using PaintStore.API.Database;
 namespace PaintStore.API.Migrations
 {
     [DbContext(typeof(PaintStoreDbContext))]
-    partial class PaintStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813072956_DebugOrderItemRelation")]
+    partial class DebugOrderItemRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -185,12 +188,12 @@ namespace PaintStore.API.Migrations
                     b.HasOne("PaintStore.Models.Order", null)
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PaintStore.Models.PaintProduct", "PaintProduct")
                         .WithMany()
                         .HasForeignKey("PaintProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("PaintProduct");
