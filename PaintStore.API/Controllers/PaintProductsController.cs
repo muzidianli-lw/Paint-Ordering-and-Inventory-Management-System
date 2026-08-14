@@ -33,14 +33,7 @@ namespace PaintStore.API.Controllers
 
             List<PaintProductResponseDto> paintProducts = await query.OrderBy(p=>p.Id)
                                                                     .Take(request.PageSize + 1)
-                                                                    .Select(p=>new PaintProductResponseDto()
-                                                                                {Id=p.Id,
-                                                                                Name=p.Name,
-                                                                                Brand=p.Brand,
-                                                                                Price=p.Price,
-                                                                                Inventory=p.Inventory,
-                                                                                RowVersion=p.RowVersion
-                                                                                })
+                                                                    .Select(PaintProductResponseDto.Projection)
                                                                     .ToListAsync(cancellationToken);
             
             bool hasNextPage = paintProducts.Count() > request.PageSize;
@@ -76,13 +69,7 @@ namespace PaintStore.API.Controllers
                                                         .OrderBy(p=>p.Id)
                                                         .Skip((int)startIndex)
                                                         .Take(request.PageSize)
-                                                        .Select(p=>new PaintProductResponseDto()
-                                                                    {Id=p.Id,
-                                                                    Name=p.Name,
-                                                                    Brand=p.Brand,
-                                                                    Price=p.Price,
-                                                                    Inventory=p.Inventory,
-                                                                    RowVersion=p.RowVersion})
+                                                        .Select(PaintProductResponseDto.Projection)
                                                         .ToListAsync(cancellationToken);
 
             int totalCount = await _dbContext.PaintProducts.CountAsync(cancellationToken);
@@ -118,13 +105,7 @@ namespace PaintStore.API.Controllers
         public async Task<IActionResult> GetPaintProduct([FromRoute] int id, CancellationToken cancellationToken)
         {
             PaintProductResponseDto? response = await _dbContext.PaintProducts.Where(p=>p.Id == id)
-                                                                                .Select(p=>new PaintProductResponseDto()
-                                                                                        {Id=p.Id,
-                                                                                        Name=p.Name,
-                                                                                        Brand=p.Brand,
-                                                                                        Price=p.Price,
-                                                                                        Inventory=p.Inventory,
-                                                                                        RowVersion=p.RowVersion})
+                                                                                .Select(PaintProductResponseDto.Projection)
                                                                                 .FirstOrDefaultAsync(cancellationToken);
             if (response == null)
             {
@@ -176,12 +157,7 @@ namespace PaintStore.API.Controllers
                 return Conflict("this name paintproduct is existed");
             }
 
-            return Ok(new PaintProductResponseDto(){Id=paintProduct.Id,
-                                                    Name=paintProduct.Name,
-                                                    Brand=paintProduct.Brand,
-                                                    Price=paintProduct.Price,
-                                                    Inventory=paintProduct.Inventory,
-                                                    RowVersion=paintProduct.RowVersion});
+            return Ok(PaintProductResponseDto.FromEntity(paintProduct));
         }
 
 
@@ -210,13 +186,7 @@ namespace PaintStore.API.Controllers
                 return Conflict("this name paintproduct is existed");
             }
 
-            return CreatedAtAction(nameof(GetPaintProduct), new {paintProduct.Id}, 
-                                    new PaintProductResponseDto(){Id=paintProduct.Id,
-                                                                    Name=paintProduct.Name,
-                                                                    Brand=paintProduct.Brand,
-                                                                    Price=paintProduct.Price,
-                                                                    Inventory=paintProduct.Inventory,
-                                                                    RowVersion=paintProduct.RowVersion});
+            return CreatedAtAction(nameof(GetPaintProduct), new {paintProduct.Id}, PaintProductResponseDto.FromEntity(paintProduct));
         }
     }
 }
