@@ -8,7 +8,16 @@ public class OrderItem
     public int OrderId { get; set; }
     public int PaintProductId { get; init; }
     public PaintProduct PaintProduct { get; set; } = null!;
-    public decimal UnitPrice { get; init; }
+    private decimal _unitPrice;
+    public decimal UnitPrice
+    { 
+        get=>_unitPrice;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 0.01m);
+            _unitPrice = value;
+        }
+    }
     private int _quantity;
 
     public int Quantity {

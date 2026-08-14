@@ -42,8 +42,34 @@ public class Order
             ArgumentOutOfRangeException.ThrowIfLessThan(item.Quantity, 1);
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(item.UnitPrice, 0);
         }
-        _orderItems.Clear();
-        _orderItems.AddRange(items);
+        Dictionary<int, OrderItem> oldOrderItems = _orderItems
+                                            .ToDictionary(o=>o.PaintProductId, o=>o);
+        Dictionary<int, OrderItem> newOrderItems = items
+                                            .ToDictionary(o=>o.PaintProductId, o=>o);
+        
+        foreach (var pid in oldOrderItems.Keys)
+        {
+            if(newOrderItems.ContainsKey(pid))
+            {
+                if (newOrderItems[pid].Quantity > oldOrderItems[pid].Quantity)
+                {
+                    oldOrderItems[pid].UnitPrice = (oldOrderItems[pid].UnitPrice * oldOrderItems[pid].Quantity
+                    + newOrderItems[pid].UnitPrice * (newOrderItems[pid].Quantity - oldOrderItems[pid].Quantity))/newOrderItems[pid].Quantity;
+                }
+                oldOrderItems[pid].Quantity = newOrderItems[pid].Quantity;
+            }
+            else
+            {
+                _orderItems.Remove(oldOrderItems[pid]);
+            }
+        }
+        
+        List<int> newId = newOrderItems.Keys.Where(k=>!oldOrderItems.ContainsKey(k)).ToList();
+        foreach (var pid in newId)
+        {
+            _orderItems.Add(newOrderItems[pid]);
+        }
+
         TotalPrice = _orderItems.Sum(p=>p.UnitPrice * p.Quantity);
         UpdatedAt = DateTime.UtcNow;
     }

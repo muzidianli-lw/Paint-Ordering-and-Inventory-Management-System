@@ -8,6 +8,7 @@ using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.Models;
 using System.Collections.Immutable;
+using PaintStore.API.Migrations;
 
 namespace PaintStore.API.Controllers
 {
@@ -119,45 +120,39 @@ namespace PaintStore.API.Controllers
             Dictionary<int, int> oldIdToCnt = order.OrderItems.ToDictionary(o=>o.PaintProductId, o=>o.Quantity);
             Dictionary<int, int> newIdToCnt = request.OrderItems
                                                     .GroupBy(i=>i.PaintProductId)
-                                                    .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Quantity));
+                                                    .ToDictionary(g=>g.Key, g=>-g.Sum(i=>i.Quantity));
+            Dictionary<int, int> delta = oldIdToCnt.Concat(newIdToCnt)
+                                                .GroupBy(i=>i.Key)
+                                                .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Value));
 
-            Dictionary<int, PaintProduct> newIdToPaintProducts= await _dbContext.PaintProducts
-                                                .Where(p=>newIdToCnt.Keys.Contains(p.Id))
-                                                .ToDictionaryAsync(p=>p.Id, p=>p, cancellationToken);
+            List<PaintProduct> PaintProducts= await _dbContext.PaintProducts
+                                                .Where(p=>newIdToCnt.Keys.Contains(p.Id) ||
+                                                            oldIdToCnt.Keys.Contains(p.Id))
+                                                .ToListAsync(cancellationToken);
 
-            if (newIdToPaintProducts.Keys.Count != newIdToCnt.Keys.Count)
+            if (PaintProducts.Count != delta.Keys.Count)
             {
                 return Conflict("some paint product not existed");
             }
 
-            List<int> onlyOldIds = order.OrderItems.Where(o=>!newIdToCnt.Keys.Contains(o.PaintProductId))
-                                                                            .Select(o=>o.PaintProductId)
-                                                                            .ToList();
-            Dictionary<int, PaintProduct> onlyOldIdToPaintProducts = await _dbContext.PaintProducts
-                                                .Where(p=>onlyOldIds.Contains(p.Id))
-                                                .ToDictionaryAsync(p=>p.Id, p=>p, cancellationToken);
-
-            Dictionary<int, PaintProduct> idToPaintProducts = newIdToPaintProducts.Concat(onlyOldIdToPaintProducts)
-                                                            .ToDictionary(x => x.Key, x => x.Value);
-            
-            foreach (var oldId in oldIdToCnt.Keys)
+            bool notEnough = PaintProducts.Any(p=>p.Inventory + delta[p.Id]<0);
+            if (notEnough)
             {
-                idToPaintProducts[oldId].AddInventory(oldIdToCnt[oldId]);
+                return Conflict("some paint product not enough");
             }
 
-            List<OrderItem> items = []; 
-            foreach (var newId in newIdToCnt.Keys)
+            foreach (var p in PaintProducts)
             {
-                int CntRedused = idToPaintProducts[newId].ReduceInventory(newIdToCnt[newId]);
-                if (CntRedused != newIdToCnt[newId])
-                {
-                    return Conflict("some paint product is not enough");
-                }
-                items.Add(new OrderItem(){PaintProductId = idToPaintProducts[newId].Id,
-                                            Quantity = newIdToCnt[newId],
-                                            PaintProduct = idToPaintProducts[newId],
-                                            UnitPrice = idToPaintProducts[newId].Price});
+                p.AddInventory(delta[p.Id]);
             }
+
+            List<OrderItem> items = PaintProducts
+                            .Where(p=>newIdToCnt.Keys.Contains(p.Id))
+                            .Select(p=>new OrderItem(){PaintProductId = p.Id,
+                                                    Quantity = -newIdToCnt[p.Id],
+                                                    PaintProduct = p,
+                                                    UnitPrice = p.Price})
+                            .ToList();       
 
             order.Update(items);
 
