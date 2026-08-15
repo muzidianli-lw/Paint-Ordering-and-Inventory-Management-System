@@ -1,14 +1,10 @@
-using System.Threading.Tasks;
 using System.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.Models;
-using System.Collections.Immutable;
-using PaintStore.API.Migrations;
 
 namespace PaintStore.API.Controllers
 {
@@ -143,7 +139,7 @@ namespace PaintStore.API.Controllers
 
             foreach (var p in PaintProducts)
             {
-                p.AddInventory(delta[p.Id]);
+                p.UpdateInventory(delta[p.Id]);
             }
 
             List<OrderItem> items = PaintProducts
@@ -272,7 +268,7 @@ namespace PaintStore.API.Controllers
             List<OrderItem> orderItems = [];
             foreach(var paintProduct in paintProducts)
             {
-                paintProduct.ReduceInventory(newItemIdCnt[paintProduct.Id]);
+                paintProduct.UpdateInventory(-newItemIdCnt[paintProduct.Id]);
                 orderItems.Add(new OrderItem(){PaintProductId = paintProduct.Id,
                                                 Quantity = newItemIdCnt[paintProduct.Id],
                                                 PaintProduct = paintProduct,

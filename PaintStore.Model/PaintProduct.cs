@@ -22,29 +22,14 @@ public class PaintProduct
     -1 输入参数错误
     >=0 实际减少数量
     */
-    public int ReduceInventory(int cnt)
+    public int UpdateInventory(int cnt)
     {
-        if(cnt < 0)
+        int left = Inventory + cnt;
+        if (left < 0)
         {
-            return -1;
+            return 0;
         }
-        if(cnt > Inventory)
-        {
-            int original = Inventory;
-            Inventory = 0;
-            return original;
-        }
-        Inventory -= cnt;
-        return cnt;
-    }
-
-    public int AddInventory(int cnt)
-    {
-        if(cnt < 0)
-        {
-            return -1;
-        }
-        Inventory += cnt;
+        Inventory = left;
         return cnt;
     }
 

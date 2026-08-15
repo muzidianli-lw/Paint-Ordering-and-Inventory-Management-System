@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -31,12 +31,17 @@ namespace PaintStore.API.Controllers
                 return BadRequest("Page is too large.");
             }
 
+            await using var transaction = 
+                await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
+
             List<UserResponseDto> users = await query.Skip((int)offset)
                                                     .Take(request.PageSize)
                                                     .Select(UserResponseDto.Projection)
                                                     .ToListAsync(cancellationToken);
             
             int totalCount = await query.CountAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
 
             return Ok(new PaginationOffsetResponseDto<UserResponseDto>()
             {
