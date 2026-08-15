@@ -21,7 +21,7 @@ public class PaintStoreDbContext: DbContext
 
         modelBuilder.Entity<OrderItem>()
                     .Property(p=>p.UnitPrice)
-                    .HasPrecision(18, 2);
+                    .HasPrecision(18, 6);
         modelBuilder.Entity<OrderItem>()
                     .HasOne(o=>o.PaintProduct)
                     .WithMany()
@@ -34,7 +34,7 @@ public class PaintStoreDbContext: DbContext
 
         modelBuilder.Entity<PaintProduct>()
                     .Property(p=>p.Price)
-                    .HasPrecision(18, 2);
+                    .HasPrecision(18, 6);
 
         modelBuilder.Entity<PaintProduct>()
                     .HasIndex(p=>p.Name)
@@ -55,7 +55,7 @@ public class PaintStoreDbContext: DbContext
         
         modelBuilder.Entity<Order>()
                     .Property(o=>o.TotalPrice)
-                    .HasPrecision(18, 2);
+                    .HasPrecision(18, 6);
 
         modelBuilder.Entity<Order>()
                     .Property(o=>o.RowVersion)
