@@ -33,14 +33,7 @@ namespace PaintStore.API.Controllers
 
             List<UserResponseDto> users = await query.Skip((int)offset)
                                                     .Take(request.PageSize)
-                                                    .Select(u => new UserResponseDto ()
-                                                            {
-                                                                Id = u.Id,
-                                                                Name=u.Name, 
-                                                                Email=u.Email, 
-                                                                Phone=u.Phone,
-                                                                RowVersion=u.RowVersion
-                                                            })
+                                                    .Select(UserResponseDto.Projection)
                                                     .ToListAsync(cancellationToken);
             
             int totalCount = await query.CountAsync(cancellationToken);
@@ -58,14 +51,7 @@ namespace PaintStore.API.Controllers
         public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
         {
             UserResponseDto? user = await _dbContext.Users.Where(u=>u.Id == id)
-                                                            .Select(u => new UserResponseDto ()
-                                                                        {
-                                                                            Id = u.Id,
-                                                                            Name=u.Name, 
-                                                                            Email=u.Email, 
-                                                                            Phone=u.Phone,
-                                                                            RowVersion=u.RowVersion
-                                                                        })
+                                                            .Select(UserResponseDto.Projection)
                                                             .FirstOrDefaultAsync(cancellationToken);
             if (user == null)
             {
@@ -116,11 +102,7 @@ namespace PaintStore.API.Controllers
             {
                 return Conflict("input email is existed");
             }
-            return Ok(new UserResponseDto(){Id=user.Id, 
-                                            Name=user.Name, 
-                                            Email=user.Email, 
-                                            Phone=user.Phone,
-                                            RowVersion=user.RowVersion});
+            return Ok(UserResponseDto.FromEntity(user));
         }
 
         [HttpDelete("{id:int:min(1)}")]
@@ -167,13 +149,7 @@ namespace PaintStore.API.Controllers
                 return Conflict("input email is existed");
             }
 
-            return CreatedAtAction(nameof(Get), new {user.Id}, new UserResponseDto()
-                                                                {
-                                                                    Id=user.Id, 
-                                                                    Name=user.Name, 
-                                                                    Email=user.Email, 
-                                                                    Phone=user.Phone,
-                                                                    RowVersion=user.RowVersion});
+            return CreatedAtAction(nameof(Get), new {user.Id}, UserResponseDto.FromEntity(user));
         }
     }
 }
