@@ -7,5 +7,5 @@ public class ServiceResult<T>
 {
     public ServiceResultsEnum State { get; set; }
     public string ErrorMsg { get; set; } = "";
-    public T? Obj { get; set; }
+    public T? Data { get; set; }
 }

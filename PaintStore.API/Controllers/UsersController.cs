@@ -33,7 +33,7 @@ namespace PaintStore.API.Controllers
             
             return response.State switch
             {
-                ServiceResultsEnum.Success => Ok(),
+                ServiceResultsEnum.Success => Ok(response.Data),
                 ServiceResultsEnum.BadRequest => BadRequest(response.ErrorMsg),
                 _ => throw new InvalidOperationException()
             };
