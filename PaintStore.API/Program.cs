@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
+using PaintStore.API.Repositories;
+using PaintStore.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<PaintStoreDbContext>(option => option.UseSqlServer(builder.Configuration.GetConnectionString("PaintDb")));
+
+builder.Services.AddScoped<UsersService>();
+builder.Services.AddScoped<UsersRepository>();
 
 var app = builder.Build();
 

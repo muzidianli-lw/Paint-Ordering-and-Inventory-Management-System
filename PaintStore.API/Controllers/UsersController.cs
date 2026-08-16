@@ -4,6 +4,9 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
+using PaintStore.API.Enums;
+using PaintStore.API.Services;
+using PaintStore.API.Services.Results;
 using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
@@ -13,43 +16,27 @@ namespace PaintStore.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly PaintStoreDbContext _dbContext;
+        private readonly UsersService _usersService;
 
-        public UsersController(PaintStoreDbContext dbContext)
+        public UsersController(PaintStoreDbContext dbContext, UsersService usersService)
         {
             _dbContext = dbContext;
+            _usersService = usersService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllUsers([FromQuery] PaginationOffsetRequestDto request, 
                                                         CancellationToken cancellationToken)
         {
-            var query = _dbContext.Users.OrderBy(u=>u.Id);
-
-            long offset = ((long)request.Page - 1) * request.PageSize;
-            if (offset > int.MaxValue)
-            {
-                return BadRequest("Page is too large.");
-            }
-
-            await using var transaction = 
-                await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
-
-            List<UserResponseDto> users = await query.Skip((int)offset)
-                                                    .Take(request.PageSize)
-                                                    .Select(UserResponseDto.Projection)
-                                                    .ToListAsync(cancellationToken);
+            ServiceResult<PaginationOffsetResponseDto<UserResponseDto>> response 
+                = await _usersService.GetAllUsers(request, cancellationToken);
             
-            int totalCount = await query.CountAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-
-            return Ok(new PaginationOffsetResponseDto<UserResponseDto>()
+            return response.State switch
             {
-                Items = users,
-                Page = request.Page,
-                PageSize = request.PageSize,
-                TotalCount = totalCount
-            });
+                ServiceResultsEnum.Success => Ok(),
+                ServiceResultsEnum.BadRequest => BadRequest(response.ErrorMsg),
+                _ => throw new InvalidOperationException()
+            };
         }
 
         [HttpGet("{id:int:min(1)}")]
