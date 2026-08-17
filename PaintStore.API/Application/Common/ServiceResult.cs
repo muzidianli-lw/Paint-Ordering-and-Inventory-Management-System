@@ -1,7 +1,7 @@
 using System;
 using PaintStore.API.Enums;
 
-namespace PaintStore.API.Services.Results;
+namespace PaintStore.API.Application.Common;
 
 public class ServiceResult<T>
 {

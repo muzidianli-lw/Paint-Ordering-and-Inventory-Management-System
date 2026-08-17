@@ -1,8 +1,8 @@
 using System;
 
-namespace PaintStore.API.Repositories.Results;
+namespace PaintStore.API.Application.Common;
 
-public class PaginationOffsetResult<T>
+public class PaginationOffsetQueryResult<T>
 {
     public List<T> Items { get; set; } = null!;
     public int TotalCount { get; set; }

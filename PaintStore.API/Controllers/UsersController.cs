@@ -2,11 +2,12 @@ using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using PaintStore.API.Application.Users;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.API.Enums;
+using PaintStore.API.Application.Common;
 using PaintStore.API.Services;
-using PaintStore.API.Services.Results;
 using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
@@ -28,13 +29,34 @@ namespace PaintStore.API.Controllers
         public async Task<IActionResult> GetAllUsers([FromQuery] PaginationOffsetRequestDto request, 
                                                         CancellationToken cancellationToken)
         {
-            ServiceResult<PaginationOffsetResponseDto<UserResponseDto>> response 
-                = await _usersService.GetAllUsers(request, cancellationToken);
+            ServiceResult<PaginationOffsetQueryResult<UserQueryResult>> serviceResult 
+                = await _usersService.GetAllUsers(request.Page, request.PageSize, cancellationToken);
             
-            return response.State switch
+            PaginationOffsetResponseDto<UserResponseDto>? response = null;
+            if (serviceResult.State == ServiceResultsEnum.Success)
             {
-                ServiceResultsEnum.Success => Ok(response.Data),
-                ServiceResultsEnum.BadRequest => BadRequest(response.ErrorMsg),
+                response = new PaginationOffsetResponseDto<UserResponseDto>()
+                                            {
+                                                Items = serviceResult.Data.Items.Select(i=>new UserResponseDto
+                                                            {
+                                                                Id = i.Id,
+                                                                Name=i.Name, 
+                                                                Email=i.Email, 
+                                                                Phone=i.Phone,
+                                                                RowVersion=i.RowVersion
+                                                            }).ToList(),
+                                                TotalCount = serviceResult.Data != null
+                                                                ? serviceResult.Data.TotalCount
+                                                                : 0,
+                                                Page = request.Page,
+                                                PageSize = request.PageSize
+                                            };
+            }
+
+            return serviceResult.State switch
+            {
+                ServiceResultsEnum.Success => Ok(response),
+                ServiceResultsEnum.InvalidValue => BadRequest(serviceResult.ErrorMsg),
                 _ => throw new InvalidOperationException()
             };
         }

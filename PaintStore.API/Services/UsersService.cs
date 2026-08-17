@@ -1,10 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
+using PaintStore.API.Application.Users;
 using PaintStore.API.DTOs;
 using PaintStore.API.Enums;
 using PaintStore.API.Repositories;
-using PaintStore.API.Repositories.Results;
-using PaintStore.API.Services.Results;
+using PaintStore.API.Application.Common;
 
 namespace PaintStore.API.Services;
 
@@ -17,34 +17,26 @@ public class UsersService
         _usersRepository = usersRepository;
     }
 
-    public async Task<ServiceResult<PaginationOffsetResponseDto<UserResponseDto>>> 
-        GetAllUsers(PaginationOffsetRequestDto request, CancellationToken cancellationToken)
+    public async Task<ServiceResult<PaginationOffsetQueryResult<UserQueryResult>>> 
+        GetAllUsers(int page, int pageSize, CancellationToken cancellationToken)
     {
-        long offset = ((long)request.Page - 1) * request.PageSize;
+        long offset = ((long)page - 1) * pageSize;
         if (offset > int.MaxValue)
         {
-            return new ServiceResult<PaginationOffsetResponseDto<UserResponseDto>>()
+            return new ServiceResult<PaginationOffsetQueryResult<UserQueryResult>>()
                     {
-                        State = ServiceResultsEnum.BadRequest,
+                        State = ServiceResultsEnum.InvalidValue,
                         ErrorMsg = "Page is too large."
                     };
         }
 
-        PaginationOffsetResult<UserResponseDto> paginationOffsetResult =  
-            await _usersRepository.GetPaginationOffsetInfoAsync((int)offset, request.PageSize, cancellationToken);
+        PaginationOffsetQueryResult<UserQueryResult> result =  
+            await _usersRepository.GetPaginationOffsetInfoAsync((int)offset, pageSize, cancellationToken);
         
-        var response = new PaginationOffsetResponseDto<UserResponseDto>()
-                        {
-                            Items = paginationOffsetResult.Items,
-                            Page = request.Page,
-                            PageSize = request.PageSize,
-                            TotalCount = paginationOffsetResult.TotalCount
-                        };
-
-        return new ServiceResult<PaginationOffsetResponseDto<UserResponseDto>>()
+        return new ServiceResult<PaginationOffsetQueryResult<UserQueryResult>>()
                     {
                         State = ServiceResultsEnum.Success,
-                        Obj = response
+                        Data = result
                     };
     }
 }

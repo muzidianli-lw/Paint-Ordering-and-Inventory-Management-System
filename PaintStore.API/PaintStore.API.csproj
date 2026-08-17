@@ -17,13 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Application\Users\" />
     <Folder Include="Controllers\" />
     <Folder Include="Database\" />
     <Folder Include="Enums\" />
     <Folder Include="Repositories\" />
-    <Folder Include="Repositories\Results\" />
     <Folder Include="Services\" />
-    <Folder Include="Services\Results\" />
   </ItemGroup>
 
   <ItemGroup>

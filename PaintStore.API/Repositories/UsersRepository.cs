@@ -1,10 +1,9 @@
 using System;
 using System.Data;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PaintStore.API.Application.Users;
 using PaintStore.API.Database;
-using PaintStore.API.DTOs;
-using PaintStore.API.Repositories.Results;
+using PaintStore.API.Application.Common;
 
 namespace PaintStore.API.Repositories;
 
@@ -17,23 +16,24 @@ public class UsersRepository
         _dbContext = dbContext;
     }
 
-    public async Task<PaginationOffsetResult<UserResponseDto>> 
+    public async Task<PaginationOffsetQueryResult<UserQueryResult>> 
         GetPaginationOffsetInfoAsync(int offset, int pageSize, CancellationToken cancellationToken)
     {
         var query = _dbContext.Users.OrderBy(u=>u.Id);
         await using var transaction = 
             await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
 
-        List<UserResponseDto> users = await query.Skip(offset)
+        List<UserQueryResult> users = await query.Skip(offset)
                                                 .Take(pageSize)
-                                                .Select(UserResponseDto.Projection)
+                                                .Select(UserQueryResult.Projection)
                                                 .ToListAsync(cancellationToken);
         
         int totalCount = await query.CountAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
-        return new PaginationOffsetResult<UserResponseDto>(){Items=users, TotalCount = totalCount};
+        return new PaginationOffsetQueryResult<UserQueryResult>(){
+                                    Items=users,
+                                    TotalCount = totalCount};
     }
-
 }
