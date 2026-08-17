@@ -3,5 +3,9 @@ namespace PaintStore.API.Enums;
 public enum ServiceResultsEnum
 {
     Success,
-    InvalidValue
+    InvalidValue,
+    NotExisted,
+    EmailExisted,
+    OldDataChanged,
+    RelatedDataExisted
 }

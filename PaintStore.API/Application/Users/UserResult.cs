@@ -4,7 +4,7 @@ using PaintStore.Models;
 
 namespace PaintStore.API.Application.Users;
 
-public class UserQueryResult
+public class UserResult
 {
     public int Id {get; init;}
     public string Name { get; init;} = "";
@@ -12,8 +12,8 @@ public class UserQueryResult
     public string Phone { get; init;} = "";
     public byte[] RowVersion { get; set; } = null!;
 
-    public static readonly Expression<Func<User, UserQueryResult>> Projection = 
-        u => new UserQueryResult
+    public static readonly Expression<Func<User, UserResult>> Projection = 
+        u => new UserResult
         {
             Id = u.Id,
             Name=u.Name, 
@@ -22,6 +22,6 @@ public class UserQueryResult
             RowVersion=u.RowVersion
         };
     
-    private static readonly Func<User, UserQueryResult> Mapper = Projection.Compile();
-    public static UserQueryResult FromEntity(User user) => Mapper(user);
+    private static readonly Func<User, UserResult> Mapper = Projection.Compile();
+    public static UserResult FromEntity(User user) => Mapper(user);
 }
