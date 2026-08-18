@@ -1,7 +1,5 @@
-using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using PaintStore.API.Application.Users;
-using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.API.Enums;
 using PaintStore.API.Application.Common;

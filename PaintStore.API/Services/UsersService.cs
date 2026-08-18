@@ -3,8 +3,6 @@ using PaintStore.API.Enums;
 using PaintStore.API.Repositories;
 using PaintStore.API.Application.Common;
 using PaintStore.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.SqlClient;
 
 namespace PaintStore.API.Services;
 
@@ -86,14 +84,12 @@ public class UsersService
                     };
         }
 
-        _usersRepository.SetRowVersion(user, rowVersion);
+        _usersRepository.SetExpectedRowVersion(user, rowVersion);
         user.Update(name, email, phone);
 
-        try
-        {
-            await _usersRepository.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
+        RepositoryResultsEnum response = await _usersRepository.SaveChangesAsync(cancellationToken);
+
+        if (response == RepositoryResultsEnum.ConcurrencyException)
         {
             bool userExist = await _usersRepository.CheckUserExistedByIdAsync(id, cancellationToken);
             if (userExist)
@@ -110,9 +106,7 @@ public class UsersService
                         ErrorMsg = UserErrorCodes.UserNotExists
                     };
         }
-        catch (DbUpdateException exception)
-            when(exception.InnerException is SqlException sqlException 
-                && sqlException.Number == 2601)
+        else if (response == RepositoryResultsEnum.UniqueIndexDuplicated)
         {
             return new ServiceResult<UserResult>()
                     {
@@ -129,20 +123,18 @@ public class UsersService
 
     public async Task<ServiceResult<UserResult>> DeleteUserAsync(int id, CancellationToken cancellationToken)
     {
-        try
+        RepositoryResults<int> response = 
+                    await _usersRepository.DeleteUserAsync(id, cancellationToken);
+        if (response.ResultsEnum == RepositoryResultsEnum.Success 
+                && response.Data == 0)
         {
-            int affectedRows = await _usersRepository.DeleteUserAsync(id, cancellationToken);
-            if(affectedRows == 0)
-            {
-                return new ServiceResult<UserResult>()
-                        {
-                            State = ServiceResultsEnum.NotExisted,
-                            ErrorMsg = UserErrorCodes.UserNotExists
-                        };
-            }
+            return new ServiceResult<UserResult>()
+                    {
+                        State = ServiceResultsEnum.NotExisted,
+                        ErrorMsg = UserErrorCodes.UserNotExists
+                    };
         }
-        catch(SqlException sqlException)
-            when(sqlException.Number == 547)
+        else if (response.ResultsEnum == RepositoryResultsEnum.ForeignKeyConstraintViolation)
         {
             return new ServiceResult<UserResult>()
                     {
@@ -171,13 +163,9 @@ public class UsersService
         User user = new User(name, email, phone);
         _usersRepository.AddUser(user);
 
-        try
-        {
-            await _usersRepository.SaveChangesAsync(cancellationToken);
-        }
-        catch(DbUpdateException exception)
-            when(exception.InnerException is SqlException sqlException
-                && sqlException.Number == 2601)
+
+        RepositoryResultsEnum response = await _usersRepository.SaveChangesAsync(cancellationToken);
+        if(response == RepositoryResultsEnum.UniqueIndexDuplicated)
         {
             return new ServiceResult<UserResult>()
                     {

@@ -4,6 +4,8 @@ using PaintStore.API.Application.Users;
 using PaintStore.API.Database;
 using PaintStore.API.Application.Common;
 using PaintStore.Models;
+using PaintStore.API.Enums;
+using Microsoft.Data.SqlClient;
 
 namespace PaintStore.API.Repositories;
 
@@ -70,19 +72,55 @@ public class UsersRepository
         return await _dbContext.Users.AnyAsync(u => u.Id == id, cancellationToken);
     }
 
-    public void SetRowVersion(User user, byte[] rowVersion)
+    public void SetExpectedRowVersion(User user, byte[] rowVersion)
     {
         _dbContext.Entry(user).Property(u=>u.RowVersion).OriginalValue = rowVersion;
     }
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    public async Task<RepositoryResultsEnum> SaveChangesAsync(CancellationToken cancellationToken)
     {
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return RepositoryResultsEnum.ConcurrencyException;
+        }
+        catch (DbUpdateException exception)
+            when(exception.InnerException is SqlException sqlException)
+        {
+            switch(sqlException.Number)
+            {
+                case 2601: return RepositoryResultsEnum.UniqueIndexDuplicated;
+                case 547: return RepositoryResultsEnum.ForeignKeyConstraintViolation;
+                default: throw;
+            };
+        }
+        return RepositoryResultsEnum.Success;
     }
 
-    public async Task<int> DeleteUserAsync(int id, CancellationToken cancellationToken)
+    public async Task<RepositoryResults<int>> DeleteUserAsync(int id, CancellationToken cancellationToken)
     {
-        return await _dbContext.Users.Where(u=>u.Id == id).ExecuteDeleteAsync(cancellationToken);
+        int affectedRows = 0;
+        try
+        {
+            affectedRows = await _dbContext.Users.Where(u=>u.Id == id)
+                                                    .ExecuteDeleteAsync(cancellationToken);
+        }
+        catch(SqlException sqlException)
+            when(sqlException.Number == 547)
+        {
+            return new RepositoryResults<int>()
+                    {
+                        ResultsEnum = RepositoryResultsEnum.ForeignKeyConstraintViolation
+                    };
+        }
+        return new RepositoryResults<int>()
+                    {
+                        ResultsEnum = RepositoryResultsEnum.Success,
+                        Data = affectedRows
+                    };
     }
 
     public void AddUser(User user)
