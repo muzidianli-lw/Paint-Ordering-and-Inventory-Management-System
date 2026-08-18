@@ -1,13 +1,8 @@
-using System.Data;
-using System.Threading.Tasks;
-using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using PaintStore.API.Database;
+using PaintStore.API.Application.Common;
 using PaintStore.API.DTOs;
-using PaintStore.Models;
+using PaintStore.API.Enums;
+using PaintStore.API.Services;
 
 namespace PaintStore.API.Controllers
 {
@@ -15,39 +10,25 @@ namespace PaintStore.API.Controllers
     [ApiController]
     public class PaintProductsController : ControllerBase
     {
-        private readonly PaintStoreDbContext _dbContext;
-        public PaintProductsController(PaintStoreDbContext dbContext)
+        private readonly PaintProductsService _dbService;
+        public PaintProductsController(PaintProductsService dbService)
         {
-            _dbContext = dbContext;
+            _dbService = dbService;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetKeysetPagination([FromQuery] PaginationKeysetRequestDto request, 
                                                             CancellationToken cancellationToken)
         {
-            IQueryable<PaintProduct> query = _dbContext.PaintProducts;
-            if(request.LastPageEndId is int lastPageEndId)
-            {
-                query = query.Where(p=>p.Id > lastPageEndId);
-            }
+            PaginationKeysetResult<PaintProductResult> response = 
+                await _dbService.GetKeysetPaginationAsync(request.PageSize, request.LastPageEndId, cancellationToken);
 
-            List<PaintProductResponseDto> paintProducts = await query.OrderBy(p=>p.Id)
-                                                                    .Take(request.PageSize + 1)
-                                                                    .Select(PaintProductResponseDto.Projection)
-                                                                    .ToListAsync(cancellationToken);
-            
-            bool hasNextPage = paintProducts.Count() > request.PageSize;
-            if(hasNextPage)
-            {
-                paintProducts.RemoveAt(request.PageSize);   
-            }
-            int? thisPageEndId = hasNextPage ? paintProducts[^1].Id: null;           
-
-            return Ok(new PaginationKeysetResponseDto<PaintProductResponseDto>()
-                        {   
-                            Items = paintProducts,
-                            HasNextPage=hasNextPage,
-                            ThisPageEndId=thisPageEndId
+            return Ok(new PaginationKeysetResponseDto<PaintProductResult>()
+                        {
+                            Items = response.Items,
+                            HasNextPage = response.HasNextPage,
+                            ThisPageEndId = response.ThisPageEndId,
+                            PageSize = request.PageSize
                         });
         }
 
@@ -55,138 +36,88 @@ namespace PaintStore.API.Controllers
         public async Task<ActionResult> GetOffsetPagination([FromQuery] PaginationOffsetRequestDto request, 
                                                             CancellationToken cancellationToken)
         {
-            long startIndex = ((long)request.Page - 1) * request.PageSize;
-            if (startIndex > int.MaxValue)
-            {
-                return BadRequest("page input error");
-            }
-
-            await using var transaction = 
-                await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Snapshot, 
-                                                                cancellationToken);
-
-            List<PaintProductResponseDto> items = await _dbContext.PaintProducts
-                                                        .OrderBy(p=>p.Id)
-                                                        .Skip((int)startIndex)
-                                                        .Take(request.PageSize)
-                                                        .Select(PaintProductResponseDto.Projection)
-                                                        .ToListAsync(cancellationToken);
-
-            int totalCount = await _dbContext.PaintProducts.CountAsync(cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-
-            return Ok(new PaginationOffsetResponseDto<PaintProductResponseDto> (){Items = items,
-                                                                            TotalCount=totalCount,
-                                                                            Page = request.Page,
-                                                                            PageSize = request.PageSize});
+            ServiceResult<PaginationOffsetQueryResult<PaintProductResult>> 
+                response = await _dbService.GetOffsetPaginationAsync(request.Page,
+                                                                    request.PageSize,
+                                                                    cancellationToken);
+            
+            return response.State switch
+                {
+                    ServiceResultsEnum.InvalidValue => BadRequest(response.ErrorMsg),
+                    ServiceResultsEnum.Success => Ok(new PaginationOffsetResponseDto<PaintProductResult> ()
+                                                    {
+                                                        Items = response.Data!.Items,
+                                                        TotalCount = response.Data.TotalCount,
+                                                        Page = request.Page,
+                                                        PageSize = request.PageSize
+                                                    }),
+                    _ => throw new InvalidOperationException()
+                };
         }
 
         [HttpDelete("{id:int:min(1)}")]
-        public async Task<IActionResult> DeletePaintProduct([FromRoute] int id, CancellationToken cancellationToken)
+        public async Task<ActionResult> DeletePaintProduct([FromRoute] int id, CancellationToken cancellationToken)
         {
-            try
-            {
-                int affectedRow = await _dbContext.PaintProducts.Where(p=>p.Id == id).ExecuteDeleteAsync(cancellationToken);
-                if (affectedRow == 0)
+            ServiceResultsEnum response = await _dbService.DeletePaintProductAsync(id, cancellationToken);
+            return response switch
                 {
-                    return NotFound();
-                }
-            }
-            catch (SqlException sqlException)
-                when(sqlException.Number == 547)
-            {
-                    return Conflict("related data exsisted");
-            }
-            return NoContent();
+                    ServiceResultsEnum.Success => NoContent(),
+                    ServiceResultsEnum.NotExisted => NotFound(),
+                    ServiceResultsEnum.RelatedDataExisted => Conflict(ErrorCodes.HasRelatedData),
+                    _ => throw new InvalidOperationException()
+                };
         }
 
         [HttpGet("{id:int:min(1)}")]
         public async Task<IActionResult> GetPaintProduct([FromRoute] int id, CancellationToken cancellationToken)
         {
-            PaintProductResponseDto? response = await _dbContext.PaintProducts.Where(p=>p.Id == id)
-                                                                                .Select(PaintProductResponseDto.Projection)
-                                                                                .FirstOrDefaultAsync(cancellationToken);
-            if (response == null)
+            ServiceResult<PaintProductResult> response = await _dbService.GetPaintProductAsync(id, cancellationToken);
+            return response.State switch
             {
-                return NotFound();
-            }
-
-            return Ok(response);
+                ServiceResultsEnum.Success => Ok(response.Data),
+                ServiceResultsEnum.NotExisted => NotFound(),
+                _ => throw new InvalidOperationException()
+            };
         }
 
         [HttpPut("{id:int:min(1)}")]
-        public async Task<IActionResult> update([FromRoute] int id,
+        public async Task<IActionResult> Update([FromRoute] int id,
                                                 [FromBody] PaintProductUpdateRequestDto request,
                                                 CancellationToken cancellationToken)
         {
-            PaintProduct? paintProduct = await _dbContext.PaintProducts.FirstOrDefaultAsync(p=>p.Id==id, cancellationToken);
-            if (paintProduct == null)
+            ServiceResult<PaintProductResult> response = await _dbService.UpdateAsync(id,
+                                                                                    request.Name,
+                                                                                    request.Price,
+                                                                                    request.Brand,
+                                                                                    request.Inventory,
+                                                                                    request.RowVersion,
+                                                                                    cancellationToken);
+            return response.State switch
             {
-                return NotFound();
-            }
-            bool existed = await _dbContext.PaintProducts.AnyAsync(p=>p.Name == request.Name.Trim() && p.Id != id,
-                                                                    cancellationToken);
-            if (existed)
-            {
-                return Conflict("this name paintproduct is existed");
-            }
-
-            paintProduct.Update(request.Name, request.Price, request.Brand, request.Inventory);
-            _dbContext.Entry(paintProduct)
-                    .Property(p=>p.RowVersion)
-                    .OriginalValue = request.RowVersion;
-
-            try
-            {
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                existed = await _dbContext.PaintProducts.AnyAsync(p=>p.Id==id, cancellationToken);
-                if (!existed)
-                {
-                    return NotFound();
-                }
-                return Conflict("old data changed");
-            }
-            catch (DbUpdateException exception)
-                when (exception.InnerException is SqlException sqlException
-                        && sqlException.Number == 2601)
-            {
-                return Conflict("this name paintproduct is existed");
-            }
-
-            return Ok(PaintProductResponseDto.FromEntity(paintProduct));
+                ServiceResultsEnum.NotExisted => NotFound(),
+                ServiceResultsEnum.NameExisted=> Conflict(ErrorCodes.NameAlreadyExists),
+                ServiceResultsEnum.OldDataChanged => Conflict(ErrorCodes.VersionConflict),
+                ServiceResultsEnum.Success => Ok(response.Data),
+                _=> throw new InvalidOperationException()
+            };
         }
-
 
         [HttpPost]
         public async Task<IActionResult> CreatPaintProduct([FromBody] PaintProductCreateRequestDto request, 
                                                             CancellationToken cancellationToken)
         {
-            bool existed = await _dbContext.PaintProducts.AnyAsync(p=>p.Name == request.Name.Trim(), cancellationToken);
-            if (existed)
+            ServiceResult<PaintProductResult> response = await _dbService.CreatPaintProductAsync(request.Name,
+                                                                                                request.Price,
+                                                                                                request.Brand,
+                                                                                                request.Inventory,
+                                                                                                cancellationToken);
+            return response.State switch
             {
-                return Conflict("this name paintproduct is existed");
-            }
-
-            PaintProduct paintProduct = new PaintProduct(request.Name, request.Price, request.Brand, request.Inventory);
-
-            _dbContext.PaintProducts.Add(paintProduct);
-
-            try
-            {
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException exception)
-                when (exception.InnerException is SqlException sqlException
-                        && sqlException.Number == 2601)
-            {
-                return Conflict("this name paintproduct is existed");
-            }
-
-            return CreatedAtAction(nameof(GetPaintProduct), new {paintProduct.Id}, PaintProductResponseDto.FromEntity(paintProduct));
+                ServiceResultsEnum.NameExisted => Conflict(ErrorCodes.NameAlreadyExists),
+                ServiceResultsEnum.Success => 
+                    CreatedAtAction(nameof(GetPaintProduct), new {response.Data!.Id}, response.Data),
+                _ => throw new InvalidOperationException()
+            };
         }
     }
 }

@@ -30,7 +30,7 @@ namespace PaintStore.API.Controllers
             {
                 response = new PaginationOffsetResponseDto<UserResult>()
                                             {
-                                                Items = serviceResult.Data.Items,
+                                                Items = serviceResult.Data!.Items,
                                                 TotalCount = serviceResult.Data != null
                                                                 ? serviceResult.Data.TotalCount
                                                                 : 0,
@@ -75,9 +75,9 @@ namespace PaintStore.API.Controllers
             return response.State switch
             {
                 ServiceResultsEnum.Success => Ok(response.Data),
-                ServiceResultsEnum.NotExisted => NotFound(),
-                ServiceResultsEnum.EmailExisted => Conflict(),
-                ServiceResultsEnum.OldDataChanged => Conflict(),
+                ServiceResultsEnum.NotExisted => NotFound(response.ErrorMsg),
+                ServiceResultsEnum.EmailExisted => Conflict(response.ErrorMsg),
+                ServiceResultsEnum.OldDataChanged => Conflict(response.ErrorMsg),
                 _ => throw new InvalidOperationException()
             };
         }
@@ -90,7 +90,7 @@ namespace PaintStore.API.Controllers
             return response.State switch
             {
                 ServiceResultsEnum.Success => NoContent(),
-                ServiceResultsEnum.RelatedDataExisted => Conflict(),
+                ServiceResultsEnum.RelatedDataExisted => Conflict(response.ErrorMsg),
                 ServiceResultsEnum.NotExisted => NotFound(),
                 _ => throw new InvalidOperationException()
             };
@@ -108,8 +108,8 @@ namespace PaintStore.API.Controllers
             return response.State switch
             {
                 ServiceResultsEnum.Success => 
-                    CreatedAtAction(nameof(Get), new {id=response.Data.Id}, response.Data),
-                ServiceResultsEnum.EmailExisted => Conflict(),
+                    CreatedAtAction(nameof(Get), new {id=response.Data!.Id}, response.Data),
+                ServiceResultsEnum.EmailExisted => Conflict(response.ErrorMsg),
                 _ => throw new InvalidOperationException()
             };
         }

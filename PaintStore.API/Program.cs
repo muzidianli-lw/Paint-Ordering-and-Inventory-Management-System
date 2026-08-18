@@ -17,6 +17,9 @@ builder.Services.AddDbContext<PaintStoreDbContext>(option => option.UseSqlServer
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<UsersRepository>();
 
+builder.Services.AddScoped<PaintProductsService>();
+builder.Services.AddScoped<PaintProductsRepository>();
+
 var app = builder.Build();
 
 

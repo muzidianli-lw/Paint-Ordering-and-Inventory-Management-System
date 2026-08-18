@@ -7,5 +7,6 @@ public enum ServiceResultsEnum
     NotExisted,
     EmailExisted,
     OldDataChanged,
-    RelatedDataExisted
+    RelatedDataExisted,
+    NameExisted
 }

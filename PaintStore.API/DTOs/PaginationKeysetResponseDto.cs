@@ -8,4 +8,5 @@ public sealed class PaginationKeysetResponseDto<T>
     public List<T> Items { get; set; } = null!;
     public bool HasNextPage { get; set; }
     public int? ThisPageEndId { get; set; }
+    public int PageSize { get; set; }
 }

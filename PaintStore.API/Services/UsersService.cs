@@ -47,7 +47,7 @@ public class UsersService
                 return new ServiceResult<UserResult>()
                             {
                                 State = ServiceResultsEnum.NotExisted,
-                                ErrorMsg = UserErrorCodes.UserNotExists
+                                ErrorMsg = ErrorCodes.UserNotExists
                             };
             }
             return new ServiceResult<UserResult>()
@@ -70,7 +70,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                                 {
                                     State = ServiceResultsEnum.NotExisted,
-                                    ErrorMsg = UserErrorCodes.UserNotExists
+                                    ErrorMsg = ErrorCodes.UserNotExists
                                 };
         }
 
@@ -80,7 +80,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.EmailExisted,
-                        ErrorMsg = UserErrorCodes.EmailAlreadyExists
+                        ErrorMsg = ErrorCodes.EmailAlreadyExists
                     };
         }
 
@@ -97,13 +97,13 @@ public class UsersService
                 return new ServiceResult<UserResult>()
                         {
                             State = ServiceResultsEnum.OldDataChanged,
-                            ErrorMsg = UserErrorCodes.VersionConflict
+                            ErrorMsg = ErrorCodes.VersionConflict
                         };
             }
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.NotExisted,
-                        ErrorMsg = UserErrorCodes.UserNotExists
+                        ErrorMsg = ErrorCodes.UserNotExists
                     };
         }
         else if (response == RepositoryResultsEnum.UniqueIndexDuplicated)
@@ -111,7 +111,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.EmailExisted,
-                        ErrorMsg = UserErrorCodes.EmailAlreadyExists
+                        ErrorMsg = ErrorCodes.EmailAlreadyExists
                     };
         }
         return new ServiceResult<UserResult>()
@@ -131,7 +131,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.NotExisted,
-                        ErrorMsg = UserErrorCodes.UserNotExists
+                        ErrorMsg = ErrorCodes.UserNotExists
                     };
         }
         else if (response.ResultsEnum == RepositoryResultsEnum.ForeignKeyConstraintViolation)
@@ -139,7 +139,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.RelatedDataExisted,
-                        ErrorMsg = UserErrorCodes.HasRelatedData
+                        ErrorMsg = ErrorCodes.HasRelatedData
                     };
         }
         return new ServiceResult<UserResult>(){ State = ServiceResultsEnum.Success };
@@ -156,7 +156,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                 {
                     State = ServiceResultsEnum.EmailExisted,
-                    ErrorMsg = UserErrorCodes.EmailAlreadyExists
+                    ErrorMsg = ErrorCodes.EmailAlreadyExists
                 };
         }
 
@@ -170,7 +170,7 @@ public class UsersService
             return new ServiceResult<UserResult>()
                     {
                         State = ServiceResultsEnum.EmailExisted,
-                        ErrorMsg = UserErrorCodes.EmailAlreadyExists
+                        ErrorMsg = ErrorCodes.EmailAlreadyExists
                     };
         }
 
