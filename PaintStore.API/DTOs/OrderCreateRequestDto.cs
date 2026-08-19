@@ -1,6 +1,5 @@
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Transactions;
+using PaintStore.API.Application.Orders;
 
 namespace PaintStore.API.DTOs;
 
@@ -11,5 +10,5 @@ public sealed class OrderCreateRequestDto
 
     [Required]
     [Length(1, int.MaxValue)]
-    public List<OrderItemCreateRequestDto> Items { get; set; } = [];
+    public List<OrderItemCreateRequest> Items { get; set; } = [];
 }

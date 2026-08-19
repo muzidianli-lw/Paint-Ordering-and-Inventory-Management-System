@@ -1,8 +1,8 @@
 using System;
 
-namespace PaintStore.API.DTOs;
+namespace PaintStore.API.Application.Orders;
 
-public class OrderItemResponseDto
+public class OrderItemInfo
 {
     public int PaintProductId { get; set; }
     public string Name { get; set; } = null!;

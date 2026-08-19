@@ -1,9 +1,9 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace PaintStore.API.DTOs;
+namespace PaintStore.API.Application.Orders;
 
-public sealed class OrderItemCreateRequestDto
+public sealed class OrderItemCreateRequest
 {
     [Required]
     [Range(1, int.MaxValue)]

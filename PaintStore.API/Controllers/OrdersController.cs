@@ -2,6 +2,8 @@ using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using PaintStore.API.Application.Common;
+using PaintStore.API.Application.Orders;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
 using PaintStore.API.Enums;
@@ -187,15 +189,15 @@ namespace PaintStore.API.Controllers
         public async Task<ActionResult<OrderResponseDto>> GetOrderByOrderId([FromRoute] int id,
                                                         CancellationToken cancellationToken)
         {
-            OrderResponseDto? order = await _dbContext.Orders
-                                        .Select(OrderResponseDto.Projection)
-                                        .AsNoTracking()
-                                        .FirstOrDefaultAsync(o=>o.Id == id, cancellationToken);
-            if (order == null)
+            ServiceResult<OrderResult> response = 
+                await _ordersService.GetOrderByOrderIdAsync(id, cancellationToken);
+
+            return response.State switch
             {
-                return NotFound();
-            }
-            return Ok(order);
+                ServiceResultsEnum.NotExisted => NotFound(response.ErrorMsg),
+                ServiceResultsEnum.Success => Ok(response.Data),
+                _ => throw new InvalidOperationException()
+            };
         }
 
         [HttpGet("byUser/{id:int:min(1)}")]
@@ -241,64 +243,20 @@ namespace PaintStore.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] OrderCreateRequestDto orderDto,
+        public async Task<IActionResult> CreateOrder([FromBody] OrderCreateRequestDto request,
                                                     CancellationToken cancellationToken)
         {
-            User? user = await _dbContext.Users
-                            .FirstOrDefaultAsync(u=>u.Id == orderDto.UserId, cancellationToken);
-            if (user == null)
+            ServiceResult<OrderResult> response =  await _ordersService.CreateOrderAsync(request.UserId,
+                                                                                        request.Items,
+                                                                                        cancellationToken);
+            return response.State switch
             {
-                return BadRequest("user id not found");
-            }
-
-            Dictionary<int, int> newItemIdCnt = orderDto.Items
-                                            .GroupBy(i=>i.PaintProductId)
-                                            .ToDictionary(g=>g.Key, g=>g.Sum(i=>i.Quantity));
-
-            List<PaintProduct> paintProducts= await _dbContext.PaintProducts
-                                                .Where(p=>newItemIdCnt.Keys.Contains(p.Id))
-                                                .ToListAsync(cancellationToken);
-
-            if (paintProducts.Count != newItemIdCnt.Keys.Count)
-            {
-                return Conflict("some paint product not existed");
-            }
-
-            bool notEnough = paintProducts.Any(p=>p.Inventory < newItemIdCnt[p.Id]);
-            if (notEnough)
-            {
-                return Conflict("some paint product inventory is not enough");
-            }
-
-            List<OrderItem> orderItems = [];
-            foreach(var paintProduct in paintProducts)
-            {
-                paintProduct.UpdateInventory(-newItemIdCnt[paintProduct.Id]);
-                orderItems.Add(new OrderItem(){PaintProductId = paintProduct.Id,
-                                                Quantity = newItemIdCnt[paintProduct.Id],
-                                                PaintProduct = paintProduct,
-                                                UnitPrice = paintProduct.Price});
-            }
-
-            Order order = new Order(orderDto.UserId, user, orderItems);
-
-            _dbContext.Orders.Add(order);
-            try
-            {
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Conflict("related data is deleted or changed");
-            }
-            catch (DbUpdateException exception)
-                when(exception.InnerException is SqlException sqlException
-                    && sqlException.Number == 547)
-            {
-                return Conflict("related data is deleted");
-            }
-
-            return CreatedAtAction(nameof(GetOrderByOrderId), new {order.Id}, OrderResponseDto.FromEntity(order));            
+                ServiceResultsEnum.NotExisted => NotFound(response.ErrorMsg),
+                ServiceResultsEnum.NotEnough => Conflict(response.ErrorMsg),
+                ServiceResultsEnum.Success => 
+                CreatedAtAction(nameof(GetOrderByOrderId), new {response.Data!.Id}, response.Data),
+                _ => throw new InvalidOperationException()
+            };
         }
     }
 }

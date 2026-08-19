@@ -20,6 +20,9 @@ builder.Services.AddScoped<UsersRepository>();
 builder.Services.AddScoped<PaintProductsService>();
 builder.Services.AddScoped<PaintProductsRepository>();
 
+builder.Services.AddScoped<OrdersService>();
+builder.Services.AddScoped<OrdersRepository>();
+
 var app = builder.Build();
 
 

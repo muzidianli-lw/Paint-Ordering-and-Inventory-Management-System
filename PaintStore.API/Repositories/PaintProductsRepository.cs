@@ -86,6 +86,11 @@ public class PaintProductsRepository
                                             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<List<PaintProduct>> GetPaintProductByIdRangeAsync(List<int> ids, CancellationToken cancellationToken)
+    {
+        return await _dbContext.PaintProducts.Where(p=>ids.Contains(p.Id)).ToListAsync(cancellationToken);
+    }
+
     public async Task<PaintProduct?> GetPaintProductByIdAsync(int id, CancellationToken cancellationToken)
     {
         return await _dbContext.PaintProducts.Where(p=>p.Id == id).FirstOrDefaultAsync(cancellationToken);
