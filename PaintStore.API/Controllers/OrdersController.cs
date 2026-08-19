@@ -4,6 +4,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
 using PaintStore.API.DTOs;
+using PaintStore.API.Enums;
+using PaintStore.API.Services;
 using PaintStore.Models;
 
 namespace PaintStore.API.Controllers
@@ -13,10 +15,12 @@ namespace PaintStore.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly PaintStoreDbContext _dbContext;
+        private readonly OrdersService _ordersService;
 
-        public OrdersController(PaintStoreDbContext dbContext)
+        public OrdersController(PaintStoreDbContext dbContext, OrdersService ordersService)
         {
             _dbContext = dbContext;
+            _ordersService = ordersService;
         }
 
         [HttpGet("page")]
@@ -91,12 +95,13 @@ namespace PaintStore.API.Controllers
         public async Task<ActionResult> DeleteOrder([FromRoute] int id,
                                                     CancellationToken cancellationToken)
         {
-            int affectedRow = await _dbContext.Orders.Where(o=>o.Id == id).ExecuteDeleteAsync(cancellationToken);
-            if(affectedRow == 0)
+            ServiceResultsEnum response =  await _ordersService.DeleteOrderAsync(id, cancellationToken);
+            return response switch
             {
-                return NotFound();
-            }
-            return NoContent();
+                ServiceResultsEnum.Success => NoContent(),
+                ServiceResultsEnum.NotExisted => NotFound(),
+                _ => throw new InvalidOperationException()
+            };
         }
 
         [HttpPut("{id:int:min(1)}")]
