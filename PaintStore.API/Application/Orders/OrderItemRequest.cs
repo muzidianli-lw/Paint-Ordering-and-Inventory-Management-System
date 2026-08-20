@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PaintStore.API.Application.Orders;
 
-public sealed class OrderItemCreateRequest
+public sealed class OrderItemRequest
 {
     [Required]
     [Range(1, int.MaxValue)]

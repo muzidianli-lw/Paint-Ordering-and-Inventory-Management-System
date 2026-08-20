@@ -24,7 +24,7 @@ public class UsersService
             return new ServiceResult<PaginationOffsetQueryResult<UserResult>>()
                     {
                         State = ServiceResultsEnum.InvalidValue,
-                        ErrorMsg = PageErrorCodes.TooLargePage
+                        ErrorMsg = ErrorCodes.TooLargePage
                     };
         }
 

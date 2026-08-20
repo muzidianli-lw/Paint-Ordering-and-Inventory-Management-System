@@ -10,5 +10,5 @@ public sealed class OrderCreateRequestDto
 
     [Required]
     [Length(1, int.MaxValue)]
-    public List<OrderItemCreateRequest> Items { get; set; } = [];
+    public List<OrderItemRequest> Items { get; set; } = [];
 }

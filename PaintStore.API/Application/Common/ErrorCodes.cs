@@ -12,4 +12,5 @@ public class ErrorCodes
     public const string PaintProductNotExist = "paint_product_not_exists";
     public const string OrderNotExist = "order_not_exists";
     public const string PaintProductInentoryNotEnough = "paint_product_inventory_not_enough";
+    public const string TooLargePage = "too_large_page";
 }

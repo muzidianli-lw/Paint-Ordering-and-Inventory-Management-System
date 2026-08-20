@@ -2,12 +2,13 @@ using System;
 
 namespace PaintStore.API.DTOs;
 using System.ComponentModel.DataAnnotations;
+using PaintStore.API.Application.Orders;
 
 public class OrderUpdateRequestDto
 {
     [Required]
     [Length(1, int.MaxValue)]
-    public List<OrderItemCreateRequestDto> OrderItems { get; set; } = [];
+    public List<OrderItemRequest> OrderItems { get; set; } = [];
 
     [Required]
     [MinLength(8)]

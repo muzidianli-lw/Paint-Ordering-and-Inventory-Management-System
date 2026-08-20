@@ -44,7 +44,7 @@ public class PaintProductsService
             return new ServiceResult<PaginationOffsetQueryResult<PaintProductResult>>()
                     {
                         State = ServiceResultsEnum.InvalidValue,
-                        ErrorMsg = PageErrorCodes.TooLargePage
+                        ErrorMsg = ErrorCodes.TooLargePage
                     };
         }
 
