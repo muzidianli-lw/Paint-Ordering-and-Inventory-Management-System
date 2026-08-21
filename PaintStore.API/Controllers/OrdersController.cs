@@ -142,6 +142,7 @@ namespace PaintStore.API.Controllers
             {
                 ServiceResultsEnum.NotExisted => NotFound(response.ErrorMsg),
                 ServiceResultsEnum.NotEnough => Conflict(response.ErrorMsg),
+                ServiceResultsEnum.OldDataChanged => Conflict(response.ErrorMsg),
                 ServiceResultsEnum.Success => 
                 CreatedAtAction(nameof(GetOrderByOrderId), new {response.Data!.Id}, response.Data),
                 _ => throw new InvalidOperationException()

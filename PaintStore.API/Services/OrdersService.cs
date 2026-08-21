@@ -273,11 +273,7 @@ public class OrdersService
         return new ServiceResult<PaginationOffsetQueryResult<OrderResult>> ()
                 {
                     State = ServiceResultsEnum.Success,
-                    Data = new PaginationOffsetQueryResult<OrderResult>()
-                            {
-                                Items=response.Items,
-                                TotalCount=response.TotalCount
-                            }
+                    Data = response
                 };
     }
 
