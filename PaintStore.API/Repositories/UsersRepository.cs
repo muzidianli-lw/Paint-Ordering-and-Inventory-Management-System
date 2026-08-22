@@ -77,29 +77,6 @@ public class UsersRepository
         _dbContext.Entry(user).Property(u=>u.RowVersion).OriginalValue = rowVersion;
     }
 
-    public async Task<RepositoryResultsEnum> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return RepositoryResultsEnum.ConcurrencyException;
-        }
-        catch (DbUpdateException exception)
-            when(exception.InnerException is SqlException sqlException)
-        {
-            switch(sqlException.Number)
-            {
-                case 2601: return RepositoryResultsEnum.UniqueIndexDuplicated;
-                case 547: return RepositoryResultsEnum.ForeignKeyConstraintViolation;
-                default: throw;
-            };
-        }
-        return RepositoryResultsEnum.Success;
-    }
-
     public async Task<RepositoryResults<int>> DeleteUserAsync(int id, CancellationToken cancellationToken)
     {
         int affectedRows = 0;

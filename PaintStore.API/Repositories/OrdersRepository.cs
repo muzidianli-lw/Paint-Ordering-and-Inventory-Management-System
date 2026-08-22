@@ -52,28 +52,6 @@ public class OrdersRepository
         _dbContext.Entry(order).Property(o=>o.RowVersion).OriginalValue = rowVersion;
     }
 
-    public async Task<RepositoryResultsEnum> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return RepositoryResultsEnum.ConcurrencyException;
-        }
-        catch (DbUpdateException exception)
-            when(exception.InnerException is SqlException sqlException)
-        {
-            switch (sqlException.Number)
-            {
-                case 547: return RepositoryResultsEnum.ForeignKeyConstraintViolation;
-                default: throw;
-            }
-        }
-        return RepositoryResultsEnum.Success;
-    }
-
     public async Task<PaginationOffsetQueryResult<OrderResult>> 
         GetPaginationOffsetInfoAsync(int offset, int pageSize, int? userId, CancellationToken cancellationToken)
     {

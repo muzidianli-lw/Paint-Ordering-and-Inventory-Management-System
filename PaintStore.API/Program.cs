@@ -23,6 +23,8 @@ builder.Services.AddScoped<PaintProductsRepository>();
 builder.Services.AddScoped<OrdersService>();
 builder.Services.AddScoped<OrdersRepository>();
 
+builder.Services.AddScoped<UnitOfWork>();
+
 var app = builder.Build();
 
 

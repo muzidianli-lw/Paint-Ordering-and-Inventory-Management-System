@@ -9,10 +9,12 @@ namespace PaintStore.API.Services;
 public class UsersService
 {
     private readonly UsersRepository _usersRepository;
+    private readonly UnitOfWork _unitOfWork;
 
-    public UsersService(UsersRepository usersRepository)
+    public UsersService(UsersRepository usersRepository, UnitOfWork unitOfWork)
     {
         _usersRepository = usersRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ServiceResult<PaginationOffsetQueryResult<UserResult>>> 
@@ -87,7 +89,7 @@ public class UsersService
         _usersRepository.SetExpectedRowVersion(user, rowVersion);
         user.Update(name, email, phone);
 
-        RepositoryResultsEnum response = await _usersRepository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         if (response == RepositoryResultsEnum.ConcurrencyException)
         {
@@ -164,7 +166,7 @@ public class UsersService
         _usersRepository.AddUser(user);
 
 
-        RepositoryResultsEnum response = await _usersRepository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
         if(response == RepositoryResultsEnum.UniqueIndexDuplicated)
         {
             return new ServiceResult<UserResult>()

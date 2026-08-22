@@ -8,10 +8,12 @@ namespace PaintStore.API.Services;
 public class PaintProductsService
 {
     private readonly PaintProductsRepository _paintProductsRepository;
+    private readonly UnitOfWork _unitOfWork;
 
-    public PaintProductsService(PaintProductsRepository paintProductsRepository)
+    public PaintProductsService(PaintProductsRepository paintProductsRepository, UnitOfWork unitOfWork)
     {
         _paintProductsRepository = paintProductsRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<PaginationKeysetResult<PaintProductResult>>
@@ -121,7 +123,7 @@ public class PaintProductsService
         paintProduct.Update(name, price, brand, inventory);
         _paintProductsRepository.SetExpectedRowVersion(paintProduct, rowVersion);
 
-        RepositoryResultsEnum response = await _paintProductsRepository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
         if (response == RepositoryResultsEnum.ConcurrencyException)
         {
             existed = await _paintProductsRepository.CheckeExistedByIdAsync(id, cancellationToken);
@@ -171,7 +173,7 @@ public class PaintProductsService
 
         _paintProductsRepository.AddItem(paintProduct);
 
-        RepositoryResultsEnum response = await _paintProductsRepository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
         if(response == RepositoryResultsEnum.UniqueIndexDuplicated)
         {
             return new ServiceResult<PaintProductResult>()

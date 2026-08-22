@@ -117,28 +117,6 @@ public class PaintProductsRepository
         _dbContext.Entry(paintProduct).Property(p=>p.RowVersion).OriginalValue = rowVersion;
     }
 
-    public async Task<RepositoryResultsEnum> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return RepositoryResultsEnum.ConcurrencyException;
-        }
-        catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException sqlException)
-        {
-            switch (sqlException.Number)
-            {
-                case 2601: return RepositoryResultsEnum.UniqueIndexDuplicated;
-                default: throw;
-            }
-        }
-        return RepositoryResultsEnum.Success;
-    }
-
     public void AddItem(PaintProduct paintProduct)
     {
         _dbContext.PaintProducts.Add(paintProduct);

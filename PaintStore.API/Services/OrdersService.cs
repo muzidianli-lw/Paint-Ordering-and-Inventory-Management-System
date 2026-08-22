@@ -11,14 +11,17 @@ public class OrdersService
     private readonly OrdersRepository _orderRespository;
     private readonly UsersRepository _usersRepository;
     private readonly PaintProductsRepository _paintProductsRepository;
+    private readonly UnitOfWork _unitOfWork;
 
     public OrdersService(OrdersRepository ordersRepository,
                             UsersRepository usersRepository,
-                            PaintProductsRepository paintProductsRepository)
+                            PaintProductsRepository paintProductsRepository,
+                            UnitOfWork unitOfWork)
     {
         _orderRespository = ordersRepository;
         _usersRepository = usersRepository;
         _paintProductsRepository = paintProductsRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ServiceResultsEnum> DeleteOrderAsync(int id,
@@ -83,7 +86,7 @@ public class OrdersService
 
         Order order = new Order(userId, user, orderItems);
         _orderRespository.AddOrder(order);
-        RepositoryResultsEnum response = await _orderRespository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
         if(response == RepositoryResultsEnum.ForeignKeyConstraintViolation)
         {
             bool existed = await _usersRepository.CheckUserExistedByIdAsync(userId, cancellationToken);
@@ -197,7 +200,7 @@ public class OrdersService
 
         _orderRespository.SetExpectedOriginalValue(order, rowVersion);
         
-        RepositoryResultsEnum response = await _orderRespository.SaveChangesAsync(cancellationToken);
+        RepositoryResultsEnum response = await _unitOfWork.SaveChangesAsync(cancellationToken);
         if (response == RepositoryResultsEnum.ConcurrencyException)
         {
             bool existed = await _orderRespository.CheckOrderExistedByOrderIdAsync(orderId, cancellationToken);
