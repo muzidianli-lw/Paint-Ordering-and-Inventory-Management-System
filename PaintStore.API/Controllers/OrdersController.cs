@@ -12,10 +12,12 @@ namespace PaintStore.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly OrdersService _ordersService;
+        private readonly ILogger<OrdersController> _logger;
 
-        public OrdersController(OrdersService ordersService)
+        public OrdersController(OrdersService ordersService, ILogger<OrdersController> logger)
         {
             _ordersService = ordersService;
+            _logger = logger;
         }
 
         [HttpGet("page")]
@@ -23,6 +25,7 @@ namespace PaintStore.API.Controllers
             GetSpecificPage([FromQuery] PaginationOffsetRequestDto request,
                             CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Get(page) params: Page={Page}, PageSize={PageSize}", request.Page, request.PageSize);
             ServiceResult<PaginationOffsetQueryResult<OrderResult>> response = 
                 await _ordersService.GetSpecificPageAsync(request.Page, request.PageSize, cancellationToken);
 

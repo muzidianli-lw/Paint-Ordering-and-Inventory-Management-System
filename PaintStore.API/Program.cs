@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PaintStore.API.Database;
 using PaintStore.API.Repositories;
 using PaintStore.API.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,13 @@ builder.Services.AddScoped<OrdersService>();
 builder.Services.AddScoped<OrdersRepository>();
 
 builder.Services.AddScoped<UnitOfWork>();
+
+Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+builder.Services.AddSerilog();
+
 
 var app = builder.Build();
 
